@@ -1,0 +1,310 @@
+[00:00:01.670] Server  LOG      ✓ Ready in 1184ms
+[00:00:15.723] Server  LOG      ○ Compiling / ...
+[00:00:17.709] Server  ERROR   Warning: [antd: Card] `bodyStyle` is deprecated. Please use `styles.body` instead.
+[00:00:17.914] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:18.146] Browser ERROR   Warning: [antd: Card] `bodyStyle` is deprecated. Please use `styles.body` instead.
+[00:00:27.411] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:27.625] Browser ERROR   Warning: [antd: Card] `bodyStyle` is deprecated. Please use `styles.body` instead.
+[00:01:06.661] Server  ERROR   Warning: [antd: Spin] `tip` only work in nest or fullscreen pattern.
+[00:01:06.889] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:01:07.053] Browser ERROR   Warning: [antd: Spin] `tip` only work in nest or fullscreen pattern.
+[00:01:53.073] Server  LOG      ✓ Compiled in 404ms
+[00:01:53.273] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:02:00.718] Server  ERROR   Warning: [antd: Statistic] `valueStyle` is deprecated. Please use `styles.content` instead.
+[00:02:01.118] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:02:01.467] Browser ERROR   Warning: [antd: Statistic] `valueStyle` is deprecated. Please use `styles.content` instead.
+[00:03:10.640] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:03:10.858] Browser ERROR   Warning: [antd: Card] `bodyStyle` is deprecated. Please use `styles.body` instead.
+[00:03:17.567] Browser ERROR   Warning: [antd: Upload] `value` is not a valid prop, do you mean `fileList`?
+[00:04:30.344] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:04:30.708] Browser ERROR   Warning: [antd: Statistic] `valueStyle` is deprecated. Please use `styles.content` instead.
+[00:08:19.990] Server  LOG      ✓ Compiled in 95ms
+[00:08:25.117] Server  LOG      ✓ Compiled in 154ms
+[00:08:32.484] Server  LOG      ✓ Compiled in 105ms
+[00:08:37.234] Server  LOG      ✓ Compiled in 106ms
+[00:09:15.483] Server  LOG      ✓ Compiled in 561ms
+[00:09:24.212] Server  LOG      ✓ Compiled in 83ms
+[00:09:25.026] Browser ERROR   uncaughtError: ReferenceError: AntInput is not defined
+[00:09:32.632] Server  WARN     ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[00:09:32.654] Server  LOG      ✓ Compiled in 112ms
+[00:09:33.369] Server  ERROR   D:\job-vacancy-frontend\job-vacancy-frontend\.next\dev\server\chunks\ssr\src_app_admin_jobs_page_tsx_33802cdd._.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+[00:09:33.374] Server  ERROR    ⨯ ReferenceError: AntInput is not defined
+[00:09:33.402] Browser ERROR   uncaughtError: ReferenceError: AntInput is not defined
+[00:09:33.655] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:09:35.023] Browser ERROR   uncaughtError: ReferenceError: AntInput is not defined
+[00:09:39.624] Server  WARN     ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[00:09:39.633] Server  LOG      ✓ Compiled in 91ms
+[00:09:40.150] Server  ERROR   D:\job-vacancy-frontend\job-vacancy-frontend\.next\dev\server\chunks\ssr\src_app_admin_jobs_page_tsx_33802cdd._.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+[00:09:40.151] Server  ERROR    ⨯ ReferenceError: AntInput is not defined
+[00:09:40.350] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:09:41.016] Browser ERROR   uncaughtError: ReferenceError: AntInput is not defined
+[00:09:52.735] Server  WARN     ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[00:09:53.272] Server  ERROR   D:\job-vacancy-frontend\job-vacancy-frontend\.next\dev\server\chunks\ssr\src_app_admin_jobs_page_tsx_33802cdd._.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+[00:09:53.273] Server  ERROR    ⨯ ReferenceError: AntInput is not defined
+[00:09:53.295] Server  LOG      ✓ Compiled in 101ms
+[00:09:53.488] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:09:55.021] Browser ERROR   uncaughtError: ReferenceError: AntInput is not defined
+[00:09:57.606] Server  WARN     ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[00:09:57.618] Server  LOG      ✓ Compiled in 91ms
+[00:09:58.600] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:10:46.588] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:11:35.428] Server  LOG      ✓ Compiled in 249ms
+[00:11:42.678] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:11:47.943] Server  LOG      ✓ Compiled in 215ms
+[00:13:32.454] Server  LOG      ✓ Compiled in 147ms
+[00:14:44.250] Server  LOG      ✓ Compiled in 247ms
+[00:14:54.599] Server  LOG      ✓ Compiled in 205ms
+[00:15:01.296] Server  LOG      ✓ Compiled in 248ms
+[00:15:14.673] Server  LOG      ✓ Compiled in 231ms
+[00:15:16.022] Browser ERROR   uncaughtError: TypeError: Cannot read properties of undefined (reading 'length')
+[00:15:16.022] Browser ERROR   uncaughtError: TypeError: Cannot read properties of undefined (reading 'length')
+[00:15:21.859] Server  WARN     ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[00:15:21.863] Server  WARN     ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[00:15:21.883] Server  LOG      ✓ Compiled in 267ms
+[00:15:24.435] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:15:24.440] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:15:29.143] Server  LOG      ✓ Compiled in 233ms
+[00:19:09.000] Server  LOG      ✓ Compiled in 244ms
+[00:19:10.024] Browser ERROR   ./src/app/admin/jobs/page.tsx:447:15
+Parsing ecmascript source code failed
+  445 |           </Form.Item>
+  446 |         </Form>
+> 447 |       </Modal>
+      |               ^
+> 448 |     </div>
+      | ^^^^^
+  449 |   );
+  450 | }
+  451 |
+
+Expected '</', got 'jsx text (
+    )'
+
+Import traces:
+  Client Component Browser:
+    ./src/app/admin/jobs/page.tsx [Client Component Browser]
+    ./src/app/admin/jobs/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/admin/jobs/page.tsx [Client Component SSR]
+    ./src/app/admin/jobs/page.tsx [Server Component]
+[00:19:10.024] Browser ERROR   ./src/app/admin/jobs/page.tsx:447:15
+Parsing ecmascript source code failed
+  445 |           </Form.Item>
+  446 |         </Form>
+> 447 |       </Modal>
+      |               ^
+> 448 |     </div>
+      | ^^^^^
+  449 |   );
+  450 | }
+  451 |
+
+Expected '</', got 'jsx text (
+    )'
+
+Import traces:
+  Client Component Browser:
+    ./src/app/admin/jobs/page.tsx [Client Component Browser]
+    ./src/app/admin/jobs/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/admin/jobs/page.tsx [Client Component SSR]
+    ./src/app/admin/jobs/page.tsx [Server Component]
+[00:19:14.354] Server  LOG      ✓ Compiled in 196ms
+[00:19:22.903] Server  LOG      ✓ Compiled in 155ms
+[00:19:28.169] Server  LOG      ✓ Compiled in 149ms
+[00:19:29.011] Browser ERROR   uncaughtError: TypeError: Cannot read properties of undefined (reading 'toLowerCase')
+[00:19:36.556] Server  WARN     ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[00:19:38.097] Server  LOG      ✓ Compiled in 166ms
+[00:19:38.533] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:19:42.167] Server  LOG      ✓ Compiled in 168ms
+[00:25:57.991] Browser ERROR   Warning: [antd: Statistic] `valueStyle` is deprecated. Please use `styles.content` instead.
+[00:47:37.759] Browser LOG     New job data: {"deadline":"2026-01-08 14:44:15","description":"MuzamilMuzamilMuzamilMuzamilMuzamilMuzamilMuzamilMuzamilMuzamilMuzamilMuzamil","employerId":"1","isActive":true,"jobType":"Full-time","location":"Mogadisho","requirements":"MuzamilMuzamilMuzamilMuzamilMuzamilMuzamilMuzamilMuzamil","responsibilities":"MuzamilMuzamilMuzamilMuzamilMuzamilMuzamil","salary":"700","title":"Muzamil"}
+[00:49:59.708] Server  LOG      ✓ Compiled in 107ms
+[00:50:07.439] Server  LOG      ✓ Compiled in 100ms
+[00:50:14.414] Server  LOG      ✓ Compiled in 218ms
+[00:50:27.969] Server  LOG      ✓ Compiled in 179ms
+[00:50:44.810] Server  LOG      ✓ Compiled in 107ms
+[00:50:49.197] Server  LOG      ✓ Compiled in 88ms
+[00:51:23.419] Browser LOG     Updated job data: {"deadline":"2024-03-15 00:00:00","description":"We are looking for an experienced Frontend Developer...","employerId":"emp-001","isActive":false,"jobType":"Full-time","location":"Mogadishu","requirements":"3+ years of experience with React, TypeScript, and modern frontend frameworks","responsibilities":"Develop and maintain user-facing features, collaborate with design team","salary":"$50,000 - $70,000","title":"Frontend Developer"}
+[00:51:38.389] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:51:48.042] Browser LOG     Updated job data: {"deadline":"2024-03-15 00:00:00","description":"We are looking for an experienced Frontend Developer...","employerId":"emp-001","isActive":false,"jobType":"Full-time","location":"Mogadishu","requirements":"3+ years of experience with React, TypeScript, and modern frontend frameworks","responsibilities":"Develop and maintain user-facing features, collaborate with design team","salary":"$50,000 - $70,000","title":"Frontend Developer"}
+[00:52:56.307] Server  LOG      ✓ Compiled in 109ms
+[00:53:00.780] Server  LOG      ✓ Compiled in 93ms
+[00:53:43.691] Server  LOG      ✓ Compiled in 161ms
+[00:56:15.078] Server  LOG      ✓ Compiled in 1ms
+[00:59:06.966] Server  LOG      ✓ Compiled in 119ms
+[00:59:12.442] Server  LOG      ✓ Compiled in 252ms
+[00:59:12.565] Browser ERROR   uncaughtError: ReferenceError: Form is not defined
+[00:59:17.201] Server  WARN     ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[00:59:17.812] Server  ERROR   D:\job-vacancy-frontend\job-vacancy-frontend\.next\dev\server\chunks\ssr\src_app_admin_jobs_page_tsx_33802cdd._.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+[00:59:17.816] Server  ERROR    ⨯ ReferenceError: Modal is not defined
+[00:59:17.839] Server  LOG      ✓ Compiled in 233ms
+[00:59:17.840] Browser ERROR   uncaughtError: ReferenceError: Modal is not defined
+[00:59:18.035] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:59:18.315] Browser ERROR   uncaughtError: ReferenceError: Modal is not defined
+[00:59:22.998] Server  WARN     ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[00:59:23.005] Server  LOG      ✓ Compiled in 137ms
+[00:59:23.595] Server  ERROR   D:\job-vacancy-frontend\job-vacancy-frontend\.next\dev\server\chunks\ssr\src_app_admin_jobs_page_tsx_33802cdd._.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+[00:59:23.596] Server  ERROR    ⨯ ReferenceError: Modal is not defined
+[00:59:23.864] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:59:24.151] Browser ERROR   uncaughtError: ReferenceError: Modal is not defined
+[00:59:43.864] Server  WARN     ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[00:59:44.420] Server  ERROR   D:\job-vacancy-frontend\job-vacancy-frontend\.next\dev\server\chunks\ssr\src_app_admin_jobs_page_tsx_33802cdd._.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+[00:59:44.421] Server  ERROR    ⨯ ReferenceError: Modal is not defined
+[00:59:44.444] Server  LOG      ✓ Compiled in 85ms
+[00:59:44.635] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:59:44.938] Browser ERROR   uncaughtError: ReferenceError: Modal is not defined
+[01:00:01.304] Server  LOG      ✓ Compiled in 95ms
+[01:00:01.410] Browser ERROR   ./src/app/admin/jobs/page.tsx:259:19
+Parsing ecmascript source code failed
+  257 |         onCancel={handleModalCancel}
+  258 |         footer={null}
+> 259 |         width={600}
+      |                   ^
+  260 |         className="top-20"
+  261 |         style={{ maxHeight: '90vh' }}
+  262 |       >
+
+Expected a semicolon
+
+Import traces:
+  Client Component Browser:
+    ./src/app/admin/jobs/page.tsx [Client Component Browser]
+    ./src/app/admin/jobs/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/admin/jobs/page.tsx [Client Component SSR]
+    ./src/app/admin/jobs/page.tsx [Server Component]
+[01:00:02.018] Browser ERROR   ./src/app/admin/jobs/page.tsx:259:19
+Parsing ecmascript source code failed
+  257 |         onCancel={handleModalCancel}
+  258 |         footer={null}
+> 259 |         width={600}
+      |                   ^
+  260 |         className="top-20"
+  261 |         style={{ maxHeight: '90vh' }}
+  262 |       >
+
+Expected a semicolon
+
+Import traces:
+  Client Component Browser:
+    ./src/app/admin/jobs/page.tsx [Client Component Browser]
+    ./src/app/admin/jobs/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/admin/jobs/page.tsx [Client Component SSR]
+    ./src/app/admin/jobs/page.tsx [Server Component]
+[01:00:21.932] Browser ERROR   ./src/app/admin/jobs/page.tsx:258:19
+Parsing ecmascript source code failed
+  256 |         onCancel={handleModalCancel}
+  257 |         footer={null}
+> 258 |         width={600}
+      |                   ^
+  259 |         className="top-20"
+  260 |         style={{ maxHeight: '90vh' }}
+  261 |       >
+
+Expected a semicolon
+
+Import traces:
+  Client Component Browser:
+    ./src/app/admin/jobs/page.tsx [Client Component Browser]
+    ./src/app/admin/jobs/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/admin/jobs/page.tsx [Client Component SSR]
+    ./src/app/admin/jobs/page.tsx [Server Component]
+[01:00:22.027] Browser ERROR   ./src/app/admin/jobs/page.tsx:258:19
+Parsing ecmascript source code failed
+  256 |         onCancel={handleModalCancel}
+  257 |         footer={null}
+> 258 |         width={600}
+      |                   ^
+  259 |         className="top-20"
+  260 |         style={{ maxHeight: '90vh' }}
+  261 |       >
+
+Expected a semicolon
+
+Import traces:
+  Client Component Browser:
+    ./src/app/admin/jobs/page.tsx [Client Component Browser]
+    ./src/app/admin/jobs/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/admin/jobs/page.tsx [Client Component SSR]
+    ./src/app/admin/jobs/page.tsx [Server Component]
+[01:01:43.354] Server  WARN     ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[01:01:44.454] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:03:43.336] Server  LOG      ✓ Compiled in 102ms
+[01:04:01.190] Server  LOG      ✓ Compiled in 120ms
+[01:05:32.395] Server  LOG      ✓ Compiled in 230ms
+[01:05:56.173] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:09:11.211] Server  LOG      ✓ Compiled in 149ms
+[01:09:39.173] Server  LOG      ✓ Compiled in 153ms
+[01:10:20.972] Server  LOG      ✓ Compiled in 231ms
+[01:10:37.746] Server  LOG      ✓ Compiled in 194ms
+[01:11:06.665] Server  LOG      ✓ Compiled in 282ms
+[01:13:37.110] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:13:48.826] Server  LOG      ✓ Compiled in 195ms
+[01:14:01.756] Server  LOG      ✓ Compiled in 1253ms
+[01:14:04.233] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:14:04.395] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:14:06.728] Server  LOG      ✓ Compiled in 177ms
+[01:14:13.431] Server  LOG      ✓ Compiled in 183ms
+[01:14:25.865] Server  LOG      ✓ Compiled in 2.5s
+[01:14:27.010] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:14:27.440] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:14:32.012] Server  LOG      ✓ Compiled in 2.2s
+[01:14:34.880] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:14:35.127] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:15:13.272] Server  LOG      ✓ Compiled in 399ms
+[01:15:29.823] Browser ERROR   Warning: Instance created by `useForm` is not connected to any Form element. Forget to pass `form` prop?
+[01:16:49.496] Server  LOG      ✓ Compiled in 280ms
+[01:16:57.847] Server  LOG      ✓ Compiled in 1520ms
+[01:17:00.233] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:17:00.587] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:17:04.119] Server  LOG      ✓ Compiled in 224ms
+[01:17:10.836] Server  LOG      ✓ Compiled in 180ms
+[01:17:17.980] Server  LOG      ✓ Compiled in 174ms
+[01:17:24.639] Server  LOG      ✓ Compiled in 163ms
+[01:17:37.311] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:17:37.669] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:17:56.836] Browser ERROR   Warning: Instance created by `useForm` is not connected to any Form element. Forget to pass `form` prop?
+[01:20:25.486] Server  LOG      ✓ Compiled in 176ms
+[01:20:39.166] Server  LOG      ✓ Compiled in 579ms
+[01:20:41.325] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:20:41.706] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:20:43.025] Browser ERROR   Warning: Instance created by `useForm` is not connected to any Form element. Forget to pass `form` prop?
+[01:20:46.357] Server  LOG      ✓ Compiled in 233ms
+[01:20:55.956] Server  LOG      ✓ Compiled in 1843ms
+[01:20:57.291] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:20:57.538] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:20:59.020] Browser ERROR   Warning: Instance created by `useForm` is not connected to any Form element. Forget to pass `form` prop?
+[01:21:09.937] Server  LOG      ✓ Compiled in 196ms
+[01:21:19.765] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:21:33.860] Browser ERROR   Warning: Instance created by `useForm` is not connected to any Form element. Forget to pass `form` prop?
+[01:23:18.733] Browser ERROR   Warning: Instance created by `useForm` is not connected to any Form element. Forget to pass `form` prop?
+[01:23:33.258] Browser ERROR   Warning: [antd: Statistic] `valueStyle` is deprecated. Please use `styles.content` instead.
+[01:35:55.247] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:36:33.995] Server  ERROR   Warning: [antd: Card] `bodyStyle` is deprecated. Please use `styles.body` instead.
+[01:36:38.607] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:36:38.908] Browser ERROR   Warning: Instance created by `useForm` is not connected to any Form element. Forget to pass `form` prop?
+[01:36:49.310] Browser ERROR   Warning: [antd: Statistic] `valueStyle` is deprecated. Please use `styles.content` instead.
+[01:36:57.097] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:37:01.706] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:37:17.608] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:37:27.710] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:37:30.884] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:37:32.770] Browser ERROR   Warning: [antd: Statistic] `valueStyle` is deprecated. Please use `styles.content` instead.
+[01:37:45.213] Server  ERROR   Warning: [antd: Statistic] `valueStyle` is deprecated. Please use `styles.content` instead.
+[01:37:45.556] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:37:45.940] Browser ERROR   Warning: [antd: Statistic] `valueStyle` is deprecated. Please use `styles.content` instead.
+[01:39:00.462] Server  LOG      ✓ Compiled in 191ms
+[01:39:06.590] Server  LOG      ✓ Compiled in 178ms
+[01:41:12.604] Server  ERROR   Warning: [antd: Card] `bodyStyle` is deprecated. Please use `styles.body` instead.
+[01:41:13.192] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:41:13.556] Browser ERROR   Warning: [antd: Card] `bodyStyle` is deprecated. Please use `styles.body` instead.

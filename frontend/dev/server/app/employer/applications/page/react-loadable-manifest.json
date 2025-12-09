@@ -1,0 +1,17 @@
+{
+  "[project]/src/components/EmployerHeader.tsx [app-client] (ecmascript, next/dynamic entry)": {
+    "id": "[project]/src/components/EmployerHeader.tsx [app-client] (ecmascript, next/dynamic entry)",
+    "files": [
+      "static/chunks/node_modules_8dd352bc._.js",
+      "static/chunks/src_components_EmployerHeader_tsx_fb103bf0._.js",
+      "static/chunks/src_components_EmployerHeader_tsx_ae3a06b1._.js"
+    ]
+  },
+  "[project]/src/components/EmployerSidebar.tsx [app-client] (ecmascript, next/dynamic entry)": {
+    "id": "[project]/src/components/EmployerSidebar.tsx [app-client] (ecmascript, next/dynamic entry)",
+    "files": [
+      "static/chunks/_d20c1792._.js",
+      "static/chunks/src_components_EmployerSidebar_tsx_ae3a06b1._.js"
+    ]
+  }
+}

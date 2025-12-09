@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id               Int               @id @default(autoincrement())
+  email            String            @unique
+  password         String
+  fullName         String
+  phoneNumber      String?
+  role             UserRole          @default(JOB_SEEKER)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  companyId        Int?
+  applications     Application[]
+  jobSeekerProfile JobSeekerProfile?
+  jobs             Job[]
+  company          Company?          @relation(fields: [companyId], references: [id])
+
+  @@map("users")
+}
+
+model Company {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  website     String?
+  location    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+
+  @@map("companies")
+}
+
+model Job {
+  id               Int           @id @default(autoincrement())
+  title            String
+  description      String
+  requirements     String
+  responsibilities String
+  jobType          JobType
+  location         String
+  salary           String?
+  deadline         DateTime
+  isActive         Boolean       @default(true)
+  employerId       Int
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  applications     Application[]
+  employer         User          @relation(fields: [employerId], references: [id], onDelete: Cascade)
+
+  @@map("jobs")
+}
+
+model Application {
+  id          Int               @id @default(autoincrement())
+  coverLetter String
+  resumeUrl   String?
+  status      ApplicationStatus @default(PENDING)
+  appliedAt   DateTime          @default(now())
+  reviewedAt  DateTime?
+  notes       String?
+  jobId       Int
+  applicantId Int
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  applicant   User              @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  job         Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, applicantId])
+  @@map("applications")
+}
+
+model JobSeekerProfile {
+  id           Int      @id @default(autoincrement())
+  bio          String?
+  skills       String[]
+  experience   String?
+  education    String?
+  resumeUrl    String?
+  linkedinUrl  String?
+  portfolioUrl String?
+  userId       Int      @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("job_seeker_profiles")
+}
+
+enum UserRole {
+  ADMIN
+  EMPLOYER
+  JOB_SEEKER
+  SUPER_ADMIN
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWED
+  ACCEPTED
+  REJECTED
+  SHORTLISTED
+}
