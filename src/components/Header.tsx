@@ -29,7 +29,9 @@ export default function Header() {
   };
 
   const handleDashboard = () => {
-    if (userRole === "employer") {
+    if (userRole === "admin") {
+      router.push("/admin/dashboard");
+    } else if (userRole === "employer") {
       router.push("/employer/dashboard");
     } else if (userRole === "seeker") {
       router.push("/seeker/dashboard");
@@ -125,19 +127,24 @@ export default function Header() {
       {/* Mobile Navigation */}
       {isMenuOpen && (
         <div className="md:hidden bg-white border-t border-gray-200 animate-slideDown">
-          <Menu
-            mode="vertical"
-            selectedKeys={[pathname]}
-            items={menuItems.map((item) => ({
-              key: item.key,
-              label: (
-                <Link href={item.key} onClick={() => setIsMenuOpen(false)}>
-                  {item.label}
-                </Link>
-              ),
-            }))}
-            className="border-none bg-transparent mb-4"
-          />
+          <div className="px-4 py-4 flex flex-col gap-2">
+            {menuItems.map((item) => (
+              <button
+                key={item.key}
+                onClick={() => {
+                  router.push(item.key);
+                  setIsMenuOpen(false);
+                }}
+                className={`px-4 py-3 rounded-lg text-base font-medium transition-all duration-300 text-left ${
+                  pathname === item.key
+                    ? "text-primary-green border-b-2 border-primary-green bg-primary-green-light"
+                    : "text-gray-600 hover:text-primary-green hover:bg-primary-green-light"
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
           <div className="px-4 pb-4 flex flex-col gap-3">
             {isAuthenticated ? (
               <>
@@ -165,20 +172,27 @@ export default function Header() {
               </>
             ) : (
               <>
-                <Link href="/login" onClick={() => setIsMenuOpen(false)}>
-                  <Button block className="h-12 text-primary-green border-primary-green font-medium rounded-lg">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link href="/register" onClick={() => setIsMenuOpen(false)}>
-                  <Button
-                    type="primary"
-                    block
-                    className="h-12 font-semibold rounded-lg bg-gradient-to-r from-primary-green to-primary-green-dark border-none"
-                  >
-                    Get Started
-                  </Button>
-                </Link>
+                <Button
+                  block
+                  onClick={() => {
+                    router.push("/login");
+                    setIsMenuOpen(false);
+                  }}
+                  className="h-12 text-primary-green border-primary-green font-medium rounded-lg"
+                >
+                  Sign In
+                </Button>
+                <Button
+                  type="primary"
+                  block
+                  onClick={() => {
+                    router.push("/register");
+                    setIsMenuOpen(false);
+                  }}
+                  className="h-12 font-semibold rounded-lg bg-gradient-to-r from-primary-green to-primary-green-dark border-none"
+                >
+                  Get Started
+                </Button>
               </>
             )}
           </div>

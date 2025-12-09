@@ -78,6 +78,25 @@
   .ant-radio-button-wrapper-checked:hover {
     @apply from-primary-green-dark to-[#047857] border-primary-green-dark text-white;
   }
+
+  /* Admin Sidebar Styles */
+  .ant-layout-sider {
+    background: white !important;
+  }
+
+  .ant-menu-item-selected {
+    background-color: rgba(16, 185, 129, 0.1) !important;
+    color: #10b981 !important;
+  }
+
+  .ant-menu-item-selected::after {
+    border-right: 3px solid #10b981 !important;
+  }
+
+  .ant-menu-item:hover {
+    background-color: rgba(16, 185, 129, 0.05) !important;
+    color: #10b981 !important;
+  }
 }
 
 @layer utilities {
