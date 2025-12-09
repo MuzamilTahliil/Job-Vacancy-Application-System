@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 export default function ConditionalFooter() {
   const pathname = usePathname();
   
-  // Don't show footer on admin routes
-  if (pathname?.startsWith("/admin")) {
+  // Don't show footer on admin and employer routes
+  if (pathname?.startsWith("/admin") || pathname?.startsWith("/employer")) {
     return null;
   }
   
