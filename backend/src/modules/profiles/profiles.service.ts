@@ -29,6 +29,41 @@ export class ProfilesService {
     return profile;
   }
 
+  async findAll() {
+    const profiles = await this.prisma.jobSeekerProfile.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phoneNumber: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return profiles.map((profile) => ({
+      id: profile.id,
+      bio: profile.bio || null,
+      skills: profile.skills || [],
+      experience: profile.experience || null,
+      education: profile.education || null,
+      resumeUrl: profile.resumeUrl || null,
+      linkedinUrl: profile.linkedinUrl || null,
+      portfolioUrl: profile.portfolioUrl || null,
+      userId: profile.userId,
+      createdAt: profile.createdAt,
+      updatedAt: profile.updatedAt,
+      user: profile.user,
+    }));
+  }
+
   async updateProfile(userId: number, dto: UpdateProfileDto | CreateProfileDto) {
     // Upsert: Create if not exists, Update if exists
     const updateData: any = {};

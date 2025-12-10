@@ -50,9 +50,8 @@ export class JobsService {
   async findAll(query?: SearchJobDto) {
     const { query: searchQuery, location, jobType } = query || {};
 
-    const where: any = {
-      isActive: true,
-    };
+    const where: any = {};
+    // For admin, don't filter by isActive - show all jobs
 
     if (searchQuery) {
       where.OR = [
@@ -69,7 +68,7 @@ export class JobsService {
         where.jobType = jobType;
     }
 
-    return this.prisma.job.findMany({
+    const jobs = await this.prisma.job.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -77,12 +76,29 @@ export class JobsService {
           select: {
             id: true,
             fullName: true,
+            email: true,
+            role: true,
             company: {
                 select: { name: true }
             }
           },
         },
       },
+    });
+
+    // Transform to include companyName from company relation and employer role
+    return jobs.map((job) => {
+      const { employer, ...rest } = job;
+      return {
+        ...rest,
+        employer: {
+          id: employer.id,
+          fullName: employer.fullName,
+          email: employer.email,
+          role: employer.role,
+          companyName: employer.company?.name || null,
+        },
+      };
     });
   }
 
@@ -92,8 +108,10 @@ export class JobsService {
       include: {
         employer: { 
             select: { 
+                id: true,
                 fullName: true, 
                 email: true,
+                role: true,
                 company: { select: { name: true } }
             } 
         },
@@ -103,20 +121,73 @@ export class JobsService {
       },
     });
     if (!job) throw new NotFoundException('Job not found');
-    return job;
+    
+    const { employer, ...rest } = job;
+    return {
+      ...rest,
+      employer: {
+        id: employer.id,
+        fullName: employer.fullName,
+        email: employer.email,
+        role: employer.role,
+        companyName: employer.company?.name || null,
+      },
+    };
   }
 
   async update(userId: number, id: number, updateJobDto: UpdateJobDto) {
     const job = await this.findOne(id);
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
-    if (job.employerId !== userId) {
-      throw new ForbiddenException('You can only edit jobs posted by your company');
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
 
-    return this.prisma.job.update({
+    // Admins can only update jobs created by admins
+    if (user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN) {
+      const jobEmployer = await this.prisma.user.findUnique({ 
+        where: { id: job.employerId },
+        select: { role: true }
+      });
+      
+      if (jobEmployer?.role !== UserRole.ADMIN && jobEmployer?.role !== UserRole.SUPER_ADMIN) {
+        throw new ForbiddenException('Admins can only edit jobs created by other admins');
+      }
+    } else {
+      // Employers can only update their own jobs
+      if (job.employerId !== userId) {
+        throw new ForbiddenException('You can only edit jobs posted by your company');
+      }
+    }
+
+    const updated = await this.prisma.job.update({
       where: { id },
       data: updateJobDto,
+      include: {
+        employer: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            role: true,
+            company: {
+              select: { name: true }
+            }
+          },
+        },
+      },
     });
+
+    return {
+      ...updated,
+      employer: {
+        id: updated.employer.id,
+        fullName: updated.employer.fullName,
+        email: updated.employer.email,
+        role: updated.employer.role,
+        companyName: updated.employer.company?.name || null,
+      },
+    };
   }
 
   async remove(userId: number, id: number) {

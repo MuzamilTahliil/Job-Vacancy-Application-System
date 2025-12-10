@@ -5,6 +5,8 @@ import {
   Patch,
   Req,
   UseGuards,
+  Param,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -15,10 +17,13 @@ import {
   ApiUpdateMyProfile,
 } from './decorators/swagger.decorators';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Roles } from '../../common/decorator/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
+import { UserRole } from '@prisma/client';
 
 @ApiTags('Profiles')
-@UseGuards(JwtAuthGuard)
 @Controller('profiles')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class ProfilesController {
   constructor(private readonly profilesService: ProfilesService) {}
 
@@ -35,5 +40,20 @@ export class ProfilesController {
     @Body() updateProfileDto: UpdateProfileDto,
   ) {
     return this.profilesService.updateProfile(req.user.id, updateProfileDto);
+  }
+
+  @Get('all')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  findAll() {
+    return this.profilesService.findAll();
+  }
+
+  @Patch(':userId')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  updateProfileByUserId(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Body() updateProfileDto: UpdateProfileDto,
+  ) {
+    return this.profilesService.updateProfile(userId, updateProfileDto);
   }
 }

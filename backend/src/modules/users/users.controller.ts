@@ -43,8 +43,21 @@ export class UsersController {
 
   @Get('profile')
   @ApiGetProfile()
-  getProfile(@Request() req: AuthenticatedRequest) {
-    return req.user;
+  async getProfile(@Request() req: AuthenticatedRequest) {
+    const user = await this.usersService.findById(req.user.id);
+    if (!user) {
+      throw new ForbiddenException('User not found');
+    }
+    return user;
+  }
+
+  @Patch('profile')
+  async updateProfile(
+    @Request() req: AuthenticatedRequest,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    // Users can update their own profile
+    return this.usersService.update(req.user.id, updateUserDto);
   }
 
   @Post()
@@ -61,18 +74,58 @@ export class UsersController {
   }
 
   @Patch(':id')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiUpdateUser()
-  update(
+  async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
+    @Request() req: AuthenticatedRequest,
   ) {
+    // Check if current user is admin and can only update other admins
+    const targetUser = await this.usersService.findById(id);
+    if (!targetUser) {
+      throw new ForbiddenException('User not found');
+    }
+
+    const currentUserRole = req.user.role as UserRole;
+    const targetUserRole = targetUser.role as UserRole;
+
+    // Admin can only update other admins (ADMIN or SUPER_ADMIN)
+    if (currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.SUPER_ADMIN) {
+      if (targetUserRole !== UserRole.ADMIN && targetUserRole !== UserRole.SUPER_ADMIN) {
+        throw new ForbiddenException('Admins can only update other admins. Other users should update their profile.');
+      }
+    }
+
     return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiDeleteUser()
-  remove(@Param('id', ParseIntPipe) id: number) {
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    // Check if user exists
+    const targetUser = await this.usersService.findById(id);
+    if (!targetUser) {
+      throw new ForbiddenException('User not found');
+    }
+
+    const currentUserRole = req.user.role as UserRole;
+    const targetUserRole = targetUser.role as UserRole;
+
+    // Prevent deleting yourself
+    if (req.user.id === id) {
+      throw new ForbiddenException('You cannot delete your own account');
+    }
+
+    // Prevent deleting SUPER_ADMIN (only SUPER_ADMIN can delete SUPER_ADMIN)
+    if (targetUserRole === UserRole.SUPER_ADMIN && currentUserRole !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException('Only super admin can delete super admin accounts');
+    }
+
     return this.usersService.remove(id);
   }
 }

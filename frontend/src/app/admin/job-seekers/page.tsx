@@ -1,81 +1,106 @@
 "use client";
 
-import { useState } from "react";
-import { Table, Button, Tag, Space, Input, message, Modal } from "antd";
-import { SearchOutlined, EyeOutlined, FileTextOutlined } from "@ant-design/icons";
+import { useState, useEffect } from "react";
+import { Table, Button, Tag, Space, Input, message, Modal, Spin, Form } from "antd";
+import { SearchOutlined, EyeOutlined, FileTextOutlined, EditOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
+import { getAllJobSeekers, JobSeekerProfile, updateJobSeekerProfile } from "@/app/services/profiles.service";
 
-interface JobSeekerProfile {
-  id: string;
-  bio?: string;
-  skills: string[];
-  experience?: string;
-  education?: string;
-  resumeUrl?: string;
-  linkedinUrl?: string;
-  portfolioUrl?: string;
-  userId: string;
+interface JobSeekerProfileWithUser extends JobSeekerProfile {
   userName: string;
   userEmail: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
-// Mock data - replace with actual API calls
-const mockJobSeekers: JobSeekerProfile[] = [
-  {
-    id: "1",
-    bio: "Experienced frontend developer with a passion for creating beautiful user interfaces.",
-    skills: ["React", "Node.js", "TypeScript", "Next.js"],
-    experience: "3 years of experience in web development",
-    education: "Bachelor's in Computer Science",
-    resumeUrl: "/resumes/john-doe.pdf",
-    linkedinUrl: "https://linkedin.com/in/johndoe",
-    portfolioUrl: "https://johndoe.dev",
-    userId: "user-001",
-    userName: "John Doe",
-    userEmail: "john@example.com",
-    createdAt: "2024-01-15T10:00:00Z",
-    updatedAt: "2024-01-15T10:00:00Z",
-  },
-  {
-    id: "2",
-    bio: "Full-stack developer specializing in Python and Django.",
-    skills: ["Python", "Django", "PostgreSQL", "Docker"],
-    experience: "5 years of experience in backend development",
-    education: "Master's in Software Engineering",
-    resumeUrl: "/resumes/jane-smith.pdf",
-    linkedinUrl: "https://linkedin.com/in/janesmith",
-    portfolioUrl: "https://janesmith.dev",
-    userId: "user-002",
-    userName: "Jane Smith",
-    userEmail: "jane@example.com",
-    createdAt: "2024-01-20T10:00:00Z",
-    updatedAt: "2024-01-20T10:00:00Z",
-  },
-  {
-    id: "3",
-    bio: "Java developer with expertise in enterprise applications.",
-    skills: ["Java", "Spring Boot", "MySQL", "Microservices"],
-    experience: "2 years of experience",
-    education: "Bachelor's in Information Technology",
-    userId: "user-003",
-    userName: "Bob Johnson",
-    userEmail: "bob@example.com",
-    createdAt: "2024-02-01T10:00:00Z",
-    updatedAt: "2024-02-01T10:00:00Z",
-  },
-];
-
 export default function JobSeekersPage() {
-  const [jobSeekers, setJobSeekers] = useState(mockJobSeekers);
+  const [jobSeekers, setJobSeekers] = useState<JobSeekerProfileWithUser[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
-  const [selectedSeeker, setSelectedSeeker] = useState<JobSeekerProfile | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSeeker, setSelectedSeeker] = useState<JobSeekerProfileWithUser | null>(null);
+  const [editingSeeker, setEditingSeeker] = useState<JobSeekerProfileWithUser | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm] = Form.useForm();
 
-  const handleViewProfile = (seeker: JobSeekerProfile) => {
+  // Fetch job seekers from backend
+  useEffect(() => {
+    fetchJobSeekers();
+  }, []);
+
+  const fetchJobSeekers = async () => {
+    try {
+      setLoading(true);
+      const allJobSeekers = await getAllJobSeekers();
+      // Transform data to include userName and userEmail
+      const transformed = allJobSeekers.map((seeker) => ({
+        ...seeker,
+        userName: seeker.user?.fullName || "Unknown",
+        userEmail: seeker.user?.email || "Unknown",
+      }));
+      setJobSeekers(transformed);
+    } catch (error: any) {
+      console.error("Error fetching job seekers:", error);
+      message.error("Failed to fetch job seekers. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleViewProfile = (seeker: JobSeekerProfileWithUser) => {
     setSelectedSeeker(seeker);
-    setIsModalOpen(true);
+    setIsViewModalOpen(true);
+  };
+
+  const handleEditProfile = (seeker: JobSeekerProfileWithUser) => {
+    setEditingSeeker(seeker);
+    setIsEditModalOpen(true);
+      editForm.setFieldsValue({
+        bio: seeker.bio || "",
+        skills: seeker.skills && seeker.skills.length > 0 ? seeker.skills.join(", ") : "",
+        experience: seeker.experience || "",
+        education: seeker.education || "",
+        resumeUrl: seeker.resumeUrl || "",
+        linkedinUrl: seeker.linkedinUrl || "",
+        portfolioUrl: seeker.portfolioUrl || "",
+      });
+  };
+
+  const handleEditModalCancel = () => {
+    setIsEditModalOpen(false);
+    setEditingSeeker(null);
+    editForm.resetFields();
+  };
+
+  const handleEditFormSubmit = async (values: any) => {
+    if (!editingSeeker) return;
+
+    try {
+      // Convert skills string to array if needed
+      const skills = Array.isArray(values.skills) 
+        ? values.skills 
+        : values.skills 
+          ? values.skills.split(',').map((s: string) => s.trim()).filter((s: string) => s)
+          : [];
+
+      await updateJobSeekerProfile(editingSeeker.userId, {
+        bio: values.bio || undefined,
+        skills: skills.length > 0 ? skills : undefined,
+        experience: values.experience || undefined,
+        education: values.education || undefined,
+        resumeUrl: values.resumeUrl || undefined,
+        linkedinUrl: values.linkedinUrl || undefined,
+        portfolioUrl: values.portfolioUrl || undefined,
+      });
+
+      // Refresh the list
+      await fetchJobSeekers();
+      message.success("Job seeker profile updated successfully!");
+      setIsEditModalOpen(false);
+      setEditingSeeker(null);
+      editForm.resetFields();
+    } catch (error: any) {
+      console.error("Error updating job seeker profile:", error);
+      message.error("Failed to update job seeker profile. Please try again.");
+    }
   };
 
   const handleViewResume = (resumeUrl: string) => {
@@ -86,21 +111,22 @@ export default function JobSeekersPage() {
     (seeker) =>
       seeker.userName.toLowerCase().includes(searchText.toLowerCase()) ||
       seeker.userEmail.toLowerCase().includes(searchText.toLowerCase()) ||
-      seeker.skills.some((skill) => skill.toLowerCase().includes(searchText.toLowerCase()))
+      seeker.skills?.some((skill) => skill.toLowerCase().includes(searchText.toLowerCase())) ||
+      seeker.bio?.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  const columns: ColumnsType<JobSeekerProfile> = [
+  const columns: ColumnsType<JobSeekerProfileWithUser> = [
     {
-      title: "ID",
+      title: "Profile ID",
       dataIndex: "id",
       key: "id",
-      width: 80,
+      width: 100,
     },
     {
       title: "User ID",
       dataIndex: "userId",
       key: "userId",
-      width: 120,
+      width: 100,
     },
     {
       title: "Name",
@@ -127,7 +153,7 @@ export default function JobSeekersPage() {
             {bio.length > 50 ? `${bio.substring(0, 50)}...` : bio}
           </span>
         ) : (
-          <span className="text-gray-400">No bio</span>
+          <span className="text-gray-400">null</span>
         ),
     },
     {
@@ -137,11 +163,15 @@ export default function JobSeekersPage() {
       width: 200,
       render: (skills: string[]) => (
         <div className="flex flex-wrap gap-1">
-          {skills.map((skill, index) => (
-            <Tag key={index} color="blue">
-              {skill}
-            </Tag>
-          ))}
+          {skills && skills.length > 0 ? (
+            skills.map((skill, index) => (
+              <Tag key={index} color="blue">
+                {skill}
+              </Tag>
+            ))
+          ) : (
+            <span className="text-gray-400">null</span>
+          )}
         </div>
       ),
     },
@@ -151,7 +181,7 @@ export default function JobSeekersPage() {
       key: "experience",
       width: 200,
       ellipsis: true,
-      render: (experience: string) => experience || <span className="text-gray-400">Not provided</span>,
+      render: (experience: string) => experience || <span className="text-gray-400">null</span>,
     },
     {
       title: "Education",
@@ -159,7 +189,7 @@ export default function JobSeekersPage() {
       key: "education",
       width: 150,
       ellipsis: true,
-      render: (education: string) => education || <span className="text-gray-400">Not provided</span>,
+      render: (education: string) => education || <span className="text-gray-400">null</span>,
     },
     {
       title: "Resume",
@@ -172,7 +202,7 @@ export default function JobSeekersPage() {
             View
           </a>
         ) : (
-          <span className="text-gray-400">No resume</span>
+          <span className="text-gray-400">null</span>
         ),
     },
     {
@@ -186,7 +216,7 @@ export default function JobSeekersPage() {
             Profile
           </a>
         ) : (
-          <span className="text-gray-400">N/A</span>
+          <span className="text-gray-400">null</span>
         ),
     },
     {
@@ -200,7 +230,7 @@ export default function JobSeekersPage() {
             View
           </a>
         ) : (
-          <span className="text-gray-400">N/A</span>
+          <span className="text-gray-400">null</span>
         ),
     },
     {
@@ -222,24 +252,24 @@ export default function JobSeekersPage() {
     {
       title: "Actions",
       key: "actions",
+      fixed: "right",
+      width: 150,
       render: (_, record) => (
-        <Space size="middle">
+        <Space size="large">
           <Button
-            type="link"
+            type="text"
             icon={<EyeOutlined />}
             onClick={() => handleViewProfile(record)}
-          >
-            View Profile
-          </Button>
-          {record.resumeUrl && (
-            <Button
-              type="link"
-              icon={<FileTextOutlined />}
-              onClick={() => handleViewResume(record.resumeUrl!)}
-            >
-              Resume
-            </Button>
-          )}
+            className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+            title="View Profile"
+          />
+          <Button
+            type="text"
+            icon={<EditOutlined />}
+            onClick={() => handleEditProfile(record)}
+            className="text-green-500 hover:text-green-700 hover:bg-green-50"
+            title="Edit Profile"
+          />
         </Space>
       ),
     },
@@ -262,20 +292,40 @@ export default function JobSeekersPage() {
         />
       </div>
 
-      <Table
-        columns={columns}
-        dataSource={filteredJobSeekers}
-        rowKey="id"
-        pagination={{ pageSize: 10 }}
-        className="bg-white rounded-lg shadow-sm"
-        scroll={{ x: 2000 }}
-      />
+      {loading ? (
+        <div className="flex justify-center items-center py-20">
+          <Spin size="large" />
+        </div>
+      ) : (
+        <Table
+          columns={columns}
+          dataSource={filteredJobSeekers}
+          rowKey="id"
+          pagination={{ 
+            pageSize: 10,
+            showSizeChanger: true,
+            showTotal: (total) => `Total ${total} job seekers`,
+            pageSizeOptions: ['10', '20', '50', '100'],
+          }}
+          className="bg-white rounded-lg shadow-sm"
+          scroll={{ x: 2000 }}
+          loading={loading}
+          size="middle"
+        />
+      )}
 
+      {/* View Profile Modal */}
       <Modal
-        open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
+        open={isViewModalOpen}
+        onCancel={() => {
+          setIsViewModalOpen(false);
+          setSelectedSeeker(null);
+        }}
         footer={[
-          <Button key="close" onClick={() => setIsModalOpen(false)} size="large">
+          <Button key="close" onClick={() => {
+            setIsViewModalOpen(false);
+            setSelectedSeeker(null);
+          }} size="large">
             Close
           </Button>,
         ]}
@@ -312,14 +362,16 @@ export default function JobSeekersPage() {
                 <p className="text-gray-900 mt-1 text-lg">{selectedSeeker.userEmail}</p>
               </div>
 
-              {selectedSeeker.bio && (
-                <div>
-                  <label className="text-sm font-semibold text-gray-600">Bio</label>
+              <div>
+                <label className="text-sm font-semibold text-gray-600">Bio</label>
+                {selectedSeeker.bio ? (
                   <p className="text-gray-900 mt-2 whitespace-pre-wrap leading-relaxed bg-gray-50 p-4 rounded-lg">
                     {selectedSeeker.bio}
                   </p>
-                </div>
-              )}
+                ) : (
+                  <p className="text-gray-400 mt-2">null</p>
+                )}
+              </div>
 
               <div>
                 <label className="text-sm font-semibold text-gray-600">Skills</label>
@@ -332,23 +384,27 @@ export default function JobSeekersPage() {
                 </div>
               </div>
 
-              {selectedSeeker.experience && (
-                <div>
-                  <label className="text-sm font-semibold text-gray-600">Experience</label>
+              <div>
+                <label className="text-sm font-semibold text-gray-600">Experience</label>
+                {selectedSeeker.experience ? (
                   <p className="text-gray-900 mt-2 whitespace-pre-wrap leading-relaxed bg-gray-50 p-4 rounded-lg">
                     {selectedSeeker.experience}
                   </p>
-                </div>
-              )}
+                ) : (
+                  <p className="text-gray-400 mt-2">null</p>
+                )}
+              </div>
 
-              {selectedSeeker.education && (
-                <div>
-                  <label className="text-sm font-semibold text-gray-600">Education</label>
+              <div>
+                <label className="text-sm font-semibold text-gray-600">Education</label>
+                {selectedSeeker.education ? (
                   <p className="text-gray-900 mt-2 whitespace-pre-wrap leading-relaxed bg-gray-50 p-4 rounded-lg">
                     {selectedSeeker.education}
                   </p>
-                </div>
-              )}
+                ) : (
+                  <p className="text-gray-400 mt-2">null</p>
+                )}
+              </div>
 
               <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
                 {selectedSeeker.resumeUrl && (
@@ -415,6 +471,111 @@ export default function JobSeekersPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Edit Profile Modal */}
+      <Modal
+        open={isEditModalOpen}
+        onCancel={handleEditModalCancel}
+        footer={null}
+        width={700}
+        className="top-10"
+      >
+        <div className="bg-gradient-to-r from-primary-green to-primary-green-dark text-white -m-6 mb-6 px-6 py-6 rounded-t-lg">
+          <h2 className="text-3xl font-bold mb-2">Edit Job Seeker Profile</h2>
+          <p className="text-white/90">Update job seeker information</p>
+        </div>
+
+        <div className="max-h-[70vh] overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
+          <Form
+            form={editForm}
+            layout="vertical"
+            onFinish={handleEditFormSubmit}
+            className="mt-4"
+          >
+            <Form.Item
+              name="bio"
+              label={<span className="text-gray-700 font-semibold">Bio</span>}
+            >
+              <Input.TextArea
+                rows={4}
+                size="large"
+                placeholder="Enter bio..."
+                showCount
+                maxLength={500}
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="skills"
+              label={<span className="text-gray-700 font-semibold">Skills (comma-separated)</span>}
+            >
+              <Input
+                size="large"
+                placeholder="React, Node.js, TypeScript, PostgreSQL"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="experience"
+              label={<span className="text-gray-700 font-semibold">Experience</span>}
+            >
+              <Input.TextArea
+                rows={4}
+                size="large"
+                placeholder="Enter experience..."
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="education"
+              label={<span className="text-gray-700 font-semibold">Education</span>}
+            >
+              <Input.TextArea
+                rows={3}
+                size="large"
+                placeholder="Enter education..."
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="resumeUrl"
+              label={<span className="text-gray-700 font-semibold">Resume URL</span>}
+            >
+              <Input size="large" placeholder="https://example.com/resume.pdf" />
+            </Form.Item>
+
+            <Form.Item
+              name="linkedinUrl"
+              label={<span className="text-gray-700 font-semibold">LinkedIn URL</span>}
+            >
+              <Input size="large" placeholder="https://linkedin.com/in/username" />
+            </Form.Item>
+
+            <Form.Item
+              name="portfolioUrl"
+              label={<span className="text-gray-700 font-semibold">Portfolio URL</span>}
+            >
+              <Input size="large" placeholder="https://portfolio.com" />
+            </Form.Item>
+
+            <Form.Item className="mb-0 mt-6">
+              <div className="flex justify-end gap-3">
+                <Button onClick={handleEditModalCancel} size="large">
+                  Cancel
+                </Button>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  size="large"
+                  className="bg-primary-green hover:bg-primary-green-dark border-primary-green"
+                >
+                  Update Profile
+                </Button>
+              </div>
+            </Form.Item>
+          </Form>
+        </div>
       </Modal>
     </div>
   );

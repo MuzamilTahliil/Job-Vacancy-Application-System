@@ -1,93 +1,71 @@
 "use client";
 
-import { useState } from "react";
-import { Table, Button, Tag, Space, Input, message, Popconfirm, Modal, Form, Select, DatePicker } from "antd";
-import { SearchOutlined, EditOutlined, DeleteOutlined, EyeOutlined, PlusOutlined } from "@ant-design/icons";
+import { useState, useEffect } from "react";
+import { Table, Button, Tag, Space, Input, message, Modal, Form, Select, DatePicker, Spin, Tooltip, Popconfirm } from "antd";
+import { SearchOutlined, EditOutlined, EyeOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
-
-interface Job {
-  id: string;
-  title: string;
-  description: string;
-  requirements: string;
-  responsibilities: string;
-  jobType: string;
-  location: string;
-  salary?: string;
-  deadline: string;
-  isActive: boolean;
-  employerId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Mock data - replace with actual API calls
-const mockJobs: Job[] = [
-  {
-    id: "1",
-    title: "Frontend Developer",
-    description: "We are looking for an experienced Frontend Developer...",
-    requirements: "3+ years of experience with React, TypeScript, and modern frontend frameworks",
-    responsibilities: "Develop and maintain user-facing features, collaborate with design team",
-    jobType: "Full-time",
-    location: "Mogadishu",
-    salary: "$50,000 - $70,000",
-    deadline: "2024-03-15",
-    isActive: true,
-    employerId: "emp-001",
-    createdAt: "2024-01-15T10:00:00Z",
-    updatedAt: "2024-01-15T10:00:00Z",
-  },
-  {
-    id: "2",
-    title: "Backend Developer",
-    description: "Join our team as a Backend Developer...",
-    requirements: "5+ years of experience with Node.js, Express, and databases",
-    responsibilities: "Design and implement scalable backend services, API development",
-    jobType: "Part-time",
-    location: "Hargeisa",
-    salary: "$40,000 - $60,000",
-    deadline: "2024-03-20",
-    isActive: true,
-    employerId: "emp-002",
-    createdAt: "2024-01-20T10:00:00Z",
-    updatedAt: "2024-01-20T10:00:00Z",
-  },
-  {
-    id: "3",
-    title: "UI/UX Designer",
-    description: "We need a creative UI/UX Designer...",
-    requirements: "Portfolio demonstrating strong design skills, proficiency in Figma",
-    responsibilities: "Create user-centered designs, conduct user research",
-    jobType: "Contract",
-    location: "Hargeisa",
-    salary: "$45,000 - $65,000",
-    deadline: "2024-02-01",
-    isActive: false,
-    employerId: "emp-003",
-    createdAt: "2024-02-01T10:00:00Z",
-    updatedAt: "2024-02-01T10:00:00Z",
-  },
-];
+import { getJobs, updateJob, createJob, deleteJob, Job, JobType } from "@/app/services/jobs.service";
+import { UserRole } from "@/app/services/auth.service";
+import { getCurrentUser } from "@/app/services/users.service";
 
 export default function JobsPage() {
-  const [jobs, setJobs] = useState(mockJobs);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [jobTypeFilter, setJobTypeFilter] = useState<JobType | "ALL">("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [viewingJob, setViewingJob] = useState<Job | null>(null);
-  const [form] = Form.useForm();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editForm] = Form.useForm();
+  const [addForm] = Form.useForm();
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
 
-  const handleDelete = (id: string) => {
-    setJobs(jobs.filter((job) => job.id !== id));
-    message.success("Job deleted successfully");
+  // Get current user info
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        setCurrentUserId(user.id);
+        setCurrentUserRole(user.role);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+        // Fallback to localStorage
+        if (typeof window !== "undefined") {
+          const userId = localStorage.getItem("userId");
+          const role = localStorage.getItem("userRole");
+          setCurrentUserId(userId ? parseInt(userId) : null);
+          setCurrentUserRole(role);
+        }
+      }
+    };
+    fetchCurrentUser();
+  }, []);
+
+  // Fetch jobs from backend
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const fetchJobs = async () => {
+    try {
+      setLoading(true);
+      // Get all jobs including inactive ones - we'll filter by isActive: undefined to get all
+      const allJobs = await getJobs();
+      setJobs(allJobs);
+    } catch (error: any) {
+      console.error("Error fetching jobs:", error);
+      message.error("Failed to fetch jobs. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleEdit = (id: string) => {
+  const handleEdit = (id: number) => {
     const job = jobs.find((j) => j.id === id);
     if (job) {
       setEditingJob(job);
@@ -99,11 +77,18 @@ export default function JobsPage() {
         responsibilities: job.responsibilities,
         jobType: job.jobType,
         location: job.location,
-        salary: job.salary,
+        salary: job.salary || "",
         deadline: dayjs(job.deadline),
-        employerId: job.employerId,
-        isActive: job.isActive ? "active" : "inactive",
+        isActive: job.isActive,
       });
+    }
+  };
+
+  const handleView = (id: number) => {
+    const job = jobs.find((j) => j.id === id);
+    if (job) {
+      setViewingJob(job);
+      setIsViewModalOpen(true);
     }
   };
 
@@ -117,80 +102,7 @@ export default function JobsPage() {
     if (!editingJob) return;
 
     try {
-      const formattedValues = {
-        ...values,
-        deadline: values.deadline.format('YYYY-MM-DD HH:mm:ss'),
-        isActive: values.isActive === "active",
-      };
-
-      const updatedJobs = jobs.map((job) =>
-        job.id === editingJob.id
-          ? {
-              ...job,
-              title: values.title,
-              description: values.description,
-              requirements: values.requirements,
-              responsibilities: values.responsibilities,
-              jobType: values.jobType,
-              location: values.location,
-              salary: values.salary || undefined,
-              deadline: formattedValues.deadline,
-              isActive: formattedValues.isActive,
-              employerId: values.employerId,
-              updatedAt: new Date().toISOString(),
-            }
-          : job
-      );
-
-      setJobs(updatedJobs);
-      message.success("Job updated successfully!");
-      setIsEditModalOpen(false);
-      setEditingJob(null);
-      editForm.resetFields();
-    } catch (error) {
-      message.error("Failed to update job");
-      console.error(error);
-    }
-  };
-
-  const handleView = (id: string) => {
-    const job = jobs.find((j) => j.id === id);
-    if (job) {
-      setViewingJob(job);
-      setIsViewModalOpen(true);
-    }
-  };
-
-  const handleViewModalCancel = () => {
-    setIsViewModalOpen(false);
-    setViewingJob(null);
-  };
-
-  const handleAddJob = () => {
-    setIsModalOpen(true);
-    form.resetFields();
-    form.setFieldsValue({
-      isActive: "active",
-      deadline: dayjs().add(30, 'day'),
-    });
-  };
-
-  const handleModalCancel = () => {
-    setIsModalOpen(false);
-    form.resetFields();
-  };
-
-  const handleFormSubmit = async (values: any) => {
-    try {
-      const formattedValues = {
-        ...values,
-        deadline: values.deadline.format('YYYY-MM-DD HH:mm:ss'),
-        isActive: values.isActive === "active",
-      };
-
-      const now = new Date().toISOString();
-      const newJob: Job = {
-        id: String(jobs.length + 1),
+      await updateJob(editingJob.id, {
         title: values.title,
         description: values.description,
         requirements: values.requirements,
@@ -198,36 +110,88 @@ export default function JobsPage() {
         jobType: values.jobType,
         location: values.location,
         salary: values.salary || undefined,
-        deadline: formattedValues.deadline,
-        isActive: formattedValues.isActive,
-        employerId: values.employerId,
-        createdAt: now,
-        updatedAt: now,
-      };
+        deadline: values.deadline.toISOString(),
+        isActive: values.isActive,
+      });
 
-      setJobs([...jobs, newJob]);
-      message.success("Job created successfully!");
-      setIsModalOpen(false);
-      form.resetFields();
-    } catch (error) {
-      message.error("Failed to create job");
-      console.error(error);
+      // Refresh the list
+      await fetchJobs();
+      message.success("Job updated successfully!");
+      setIsEditModalOpen(false);
+      setEditingJob(null);
+      editForm.resetFields();
+    } catch (error: any) {
+      console.error("Error updating job:", error);
+      message.error("Failed to update job. Please try again.");
     }
   };
 
-  const filteredJobs = jobs.filter(
-    (job) =>
+  const handleAddJob = () => {
+    setIsAddModalOpen(true);
+    addForm.resetFields();
+    addForm.setFieldsValue({
+      isActive: true,
+      deadline: dayjs().add(30, 'day'),
+    });
+  };
+
+  const handleAddModalCancel = () => {
+    setIsAddModalOpen(false);
+    addForm.resetFields();
+  };
+
+  const handleAddFormSubmit = async (values: any) => {
+    try {
+      await createJob({
+        title: values.title,
+        description: values.description,
+        requirements: values.requirements,
+        responsibilities: values.responsibilities,
+        jobType: values.jobType,
+        location: values.location,
+        salary: values.salary || undefined,
+        deadline: values.deadline.toISOString(),
+        isActive: values.isActive,
+      });
+
+      // Refresh the list
+      await fetchJobs();
+      message.success("Job created successfully!");
+      setIsAddModalOpen(false);
+      addForm.resetFields();
+    } catch (error: any) {
+      console.error("Error creating job:", error);
+      message.error("Failed to create job. Please try again.");
+    }
+  };
+
+  const filteredJobs = jobs.filter((job) => {
+    // Search filter
+    const matchesSearch =
       job.title.toLowerCase().includes(searchText.toLowerCase()) ||
       job.location.toLowerCase().includes(searchText.toLowerCase()) ||
-      job.employerId.toLowerCase().includes(searchText.toLowerCase())
-  );
+      job.employer?.fullName?.toLowerCase().includes(searchText.toLowerCase()) ||
+      job.employer?.companyName?.toLowerCase().includes(searchText.toLowerCase());
+
+    // Job type filter
+    const matchesJobType = jobTypeFilter === "ALL" || job.jobType === jobTypeFilter;
+
+    // Status filter
+    const matchesStatus =
+      statusFilter === "ALL" ||
+      (statusFilter === "ACTIVE" && job.isActive) ||
+      (statusFilter === "INACTIVE" && !job.isActive);
+
+    return matchesSearch && matchesJobType && matchesStatus;
+  });
 
   const columns: ColumnsType<Job> = [
     {
       title: "ID",
       dataIndex: "id",
       key: "id",
-      width: 80,
+      width: 100,
+      fixed: "left",
     },
     {
       title: "Title",
@@ -235,6 +199,20 @@ export default function JobsPage() {
       key: "title",
       sorter: (a, b) => a.title.localeCompare(b.title),
       width: 200,
+    },
+    {
+      title: "Employer",
+      dataIndex: ["employer", "fullName"],
+      key: "employer",
+      width: 180,
+      render: (_, record) => record.employer?.fullName || <span className="text-gray-400">null</span>,
+    },
+    {
+      title: "Company",
+      dataIndex: ["employer", "companyName"],
+      key: "company",
+      width: 180,
+      render: (_, record) => record.employer?.companyName || <span className="text-gray-400">null</span>,
     },
     {
       title: "Description",
@@ -252,27 +230,35 @@ export default function JobsPage() {
       title: "Job Type",
       dataIndex: "jobType",
       key: "jobType",
-      width: 120,
-      render: (jobType: string) => <Tag>{jobType}</Tag>,
+      width: 140,
+      render: (jobType: JobType) => {
+        const colors: Record<JobType, string> = {
+          [JobType.FULL_TIME]: "blue",
+          [JobType.PART_TIME]: "green",
+          [JobType.CONTRACT]: "orange",
+          [JobType.INTERNSHIP]: "purple",
+        };
+        return <Tag color={colors[jobType]}>{jobType.replace('_', ' ')}</Tag>;
+      },
     },
     {
       title: "Location",
       dataIndex: "location",
       key: "location",
-      width: 120,
+      width: 150,
     },
     {
       title: "Salary",
       dataIndex: "salary",
       key: "salary",
       width: 150,
-      render: (salary: string) => salary || <span className="text-gray-400">Not specified</span>,
+      render: (salary: string) => salary || <span className="text-gray-400">null</span>,
     },
     {
       title: "Deadline",
       dataIndex: "deadline",
       key: "deadline",
-      width: 150,
+      width: 160,
       sorter: (a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime(),
       render: (deadline: string) => new Date(deadline).toLocaleDateString(),
     },
@@ -288,16 +274,10 @@ export default function JobsPage() {
       ),
     },
     {
-      title: "Employer ID",
-      dataIndex: "employerId",
-      key: "employerId",
-      width: 120,
-    },
-    {
       title: "Created At",
       dataIndex: "createdAt",
       key: "createdAt",
-      width: 150,
+      width: 160,
       sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       render: (createdAt: string) => new Date(createdAt).toLocaleDateString(),
     },
@@ -305,36 +285,63 @@ export default function JobsPage() {
       title: "Actions",
       key: "actions",
       fixed: "right",
-      width: 180,
-      render: (_, record) => (
-        <Space size="middle">
-          <Button
-            type="link"
-            icon={<EyeOutlined />}
-            onClick={() => handleView(record.id)}
-          >
-            View
-          </Button>
-          <Button
-            type="link"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record.id)}
-          >
-            Edit
-          </Button>
-          <Popconfirm
-            title="Delete job"
-            description="Are you sure you want to delete this job?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button type="link" danger icon={<DeleteOutlined />}>
-              Delete
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
+      width: 200,
+      render: (_, record) => {
+        // Check if user can edit/delete this job
+        const isAdmin = currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.SUPER_ADMIN;
+        const isOwnJob = record.employerId === currentUserId;
+        const isEmployerAdmin = record.employer?.role === UserRole.ADMIN || record.employer?.role === UserRole.SUPER_ADMIN;
+        
+        // Admin can edit/delete if: it's their own job OR employer is also admin
+        // Employer can edit/delete if: it's their own job
+        const canEditDelete = isAdmin 
+          ? (isOwnJob || isEmployerAdmin)
+          : isOwnJob;
+
+        return (
+          <Space size="large">
+            <Tooltip title="View Job">
+              <Button
+                type="text"
+                icon={<EyeOutlined />}
+                onClick={() => handleView(record.id)}
+                className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+              />
+            </Tooltip>
+            <Tooltip title={canEditDelete ? "Edit Job" : "You can only edit your own jobs (or admins can edit admin-created jobs)"}>
+              <Button
+                type="text"
+                icon={<EditOutlined />}
+                onClick={() => canEditDelete ? handleEdit(record.id) : undefined}
+                disabled={!canEditDelete}
+                className={canEditDelete 
+                  ? "text-green-500 hover:text-green-700 hover:bg-green-50" 
+                  : "text-gray-300 cursor-not-allowed"}
+              />
+            </Tooltip>
+            <Tooltip title={canEditDelete ? "Delete Job" : "You can only delete your own jobs (or admins can delete admin-created jobs)"}>
+              <Popconfirm
+                title="Delete job"
+                description="Are you sure you want to delete this job?"
+                onConfirm={() => canEditDelete ? handleDelete(record.id) : undefined}
+                okText="Yes"
+                cancelText="No"
+                disabled={!canEditDelete}
+              >
+                <Button
+                  type="text"
+                  danger
+                  icon={<DeleteOutlined />}
+                  disabled={!canEditDelete}
+                  className={canEditDelete 
+                    ? "hover:bg-red-50" 
+                    : "text-gray-300 cursor-not-allowed"}
+                />
+              </Popconfirm>
+            </Tooltip>
+          </Space>
+        );
+      },
     },
   ];
 
@@ -342,14 +349,14 @@ export default function JobsPage() {
     <div>
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-800 mb-4">Jobs Management</h1>
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 mb-4">
           <Input
             size="large"
-            placeholder="Search jobs by title, company, or location..."
+            placeholder="Search jobs by title, employer, company, or location..."
             prefix={<SearchOutlined />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            className="max-w-md"
+            className="max-w-md flex-1"
           />
           <Button
             type="primary"
@@ -361,167 +368,57 @@ export default function JobsPage() {
             Add Job
           </Button>
         </div>
+        <div className="flex gap-4 flex-wrap">
+          <Select
+            size="large"
+            placeholder="Filter by Job Type"
+            value={jobTypeFilter}
+            onChange={(value) => setJobTypeFilter(value)}
+            className="w-[200px]"
+            allowClear
+          >
+            <Select.Option value="ALL">All Job Types</Select.Option>
+            <Select.Option value={JobType.FULL_TIME}>Full Time</Select.Option>
+            <Select.Option value={JobType.PART_TIME}>Part Time</Select.Option>
+            <Select.Option value={JobType.CONTRACT}>Contract</Select.Option>
+            <Select.Option value={JobType.INTERNSHIP}>Internship</Select.Option>
+          </Select>
+          <Select
+            size="large"
+            placeholder="Filter by Status"
+            value={statusFilter}
+            onChange={(value) => setStatusFilter(value)}
+            className="w-[200px]"
+            allowClear
+          >
+            <Select.Option value="ALL">All Status</Select.Option>
+            <Select.Option value="ACTIVE">Active</Select.Option>
+            <Select.Option value="INACTIVE">Inactive</Select.Option>
+          </Select>
+        </div>
       </div>
 
-      <Table
-        columns={columns}
-        dataSource={filteredJobs}
-        rowKey="id"
-        pagination={{ pageSize: 10 }}
-        className="bg-white rounded-lg shadow-sm"
-        scroll={{ x: 1500 }}
-      />
-
-      {/* Add Job Modal */}
-      <Modal
-        open={isModalOpen}
-        onCancel={handleModalCancel}
-        footer={null}
-        width={700}
-        className="top-10"
-      >
-        {/* Beautiful Header */}
-        <div className="bg-gradient-to-r from-primary-green to-primary-green-dark text-white -m-6 mb-6 px-6 py-6 rounded-t-lg">
-          <h2 className="text-3xl font-bold mb-2">Add New Job</h2>
-          <p className="text-white/90">Create a new job posting for your organization</p>
+      {loading ? (
+        <div className="flex justify-center items-center py-20">
+          <Spin size="large" />
         </div>
-
-        <div className="max-h-[70vh] overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleFormSubmit}
-            className="mt-4"
-          >
-            <Form.Item
-              name="title"
-              label={<span className="text-gray-700 font-semibold">Job Title</span>}
-              rules={[{ required: true, message: "Please enter job title" }]}
-            >
-              <Input size="large" placeholder="e.g., Frontend Developer" />
-            </Form.Item>
-
-            <Form.Item
-              name="description"
-              label={<span className="text-gray-700 font-semibold">Description</span>}
-              rules={[{ required: true, message: "Please enter job description" }]}
-            >
-              <Input.TextArea
-                rows={4}
-                placeholder="Enter job description..."
-                size="large"
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="requirements"
-              label={<span className="text-gray-700 font-semibold">Requirements</span>}
-              rules={[{ required: true, message: "Please enter job requirements" }]}
-            >
-              <Input.TextArea
-                rows={4}
-                placeholder="Enter job requirements..."
-                size="large"
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="responsibilities"
-              label={<span className="text-gray-700 font-semibold">Responsibilities</span>}
-              rules={[{ required: true, message: "Please enter job responsibilities" }]}
-            >
-              <Input.TextArea
-                rows={4}
-                placeholder="Enter job responsibilities..."
-                size="large"
-              />
-            </Form.Item>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Form.Item
-                name="jobType"
-                label={<span className="text-gray-700 font-semibold">Job Type</span>}
-                rules={[{ required: true, message: "Please select job type" }]}
-              >
-                <Select size="large" placeholder="Select job type">
-                  <Select.Option value="Full-time">Full-time</Select.Option>
-                  <Select.Option value="Part-time">Part-time</Select.Option>
-                  <Select.Option value="Contract">Contract</Select.Option>
-                  <Select.Option value="Internship">Internship</Select.Option>
-                </Select>
-              </Form.Item>
-
-              <Form.Item
-                name="location"
-                label={<span className="text-gray-700 font-semibold">Location</span>}
-                rules={[{ required: true, message: "Please enter location" }]}
-              >
-                <Input size="large" placeholder="e.g., Mogadishu" />
-              </Form.Item>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Form.Item
-                name="salary"
-                label={<span className="text-gray-700 font-semibold">Salary (Optional)</span>}
-              >
-                <Input size="large" placeholder="e.g., $50,000 - $70,000" />
-              </Form.Item>
-
-              <Form.Item
-                name="deadline"
-                label={<span className="text-gray-700 font-semibold">Application Deadline</span>}
-                rules={[{ required: true, message: "Please select deadline" }]}
-              >
-                <DatePicker
-                  size="large"
-                  className="w-full"
-                  showTime
-                  format="YYYY-MM-DD HH:mm"
-                  disabledDate={(current) => current && current < dayjs().startOf('day')}
-                />
-              </Form.Item>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Form.Item
-                name="employerId"
-                label={<span className="text-gray-700 font-semibold">Employer ID</span>}
-                rules={[{ required: true, message: "Please enter employer ID" }]}
-              >
-                <Input size="large" placeholder="Enter employer ID" />
-              </Form.Item>
-
-              <Form.Item
-                name="isActive"
-                label={<span className="text-gray-700 font-semibold">Active Status</span>}
-                rules={[{ required: true, message: "Please select status" }]}
-              >
-                <Select size="large" placeholder="Select status">
-                  <Select.Option value="active">Active</Select.Option>
-                  <Select.Option value="inactive">Inactive</Select.Option>
-                </Select>
-              </Form.Item>
-            </div>
-
-            <Form.Item className="mb-0 mt-6">
-              <div className="flex justify-end gap-3">
-                <Button onClick={handleModalCancel} size="large">
-                  Cancel
-                </Button>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  size="large"
-                  className="bg-primary-green hover:bg-primary-green-dark border-primary-green"
-                >
-                  Create Job
-                </Button>
-              </div>
-            </Form.Item>
-          </Form>
-        </div>
-      </Modal>
+      ) : (
+        <Table
+          columns={columns}
+          dataSource={filteredJobs}
+          rowKey="id"
+          pagination={{ 
+            pageSize: 10,
+            showSizeChanger: true,
+            showTotal: (total) => `Total ${total} jobs`,
+            pageSizeOptions: ['10', '20', '50', '100'],
+          }}
+          className="bg-white rounded-lg shadow-sm"
+          scroll={{ x: 1800 }}
+          loading={loading}
+          size="middle"
+        />
+      )}
 
       {/* Edit Job Modal */}
       <Modal
@@ -595,10 +492,10 @@ export default function JobsPage() {
                 rules={[{ required: true, message: "Please select job type" }]}
               >
                 <Select size="large" placeholder="Select job type">
-                  <Select.Option value="Full-time">Full-time</Select.Option>
-                  <Select.Option value="Part-time">Part-time</Select.Option>
-                  <Select.Option value="Contract">Contract</Select.Option>
-                  <Select.Option value="Internship">Internship</Select.Option>
+                  <Select.Option value={JobType.FULL_TIME}>Full-time</Select.Option>
+                  <Select.Option value={JobType.PART_TIME}>Part-time</Select.Option>
+                  <Select.Option value={JobType.CONTRACT}>Contract</Select.Option>
+                  <Select.Option value={JobType.INTERNSHIP}>Internship</Select.Option>
                 </Select>
               </Form.Item>
 
@@ -634,26 +531,16 @@ export default function JobsPage() {
               </Form.Item>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <Form.Item
-                name="employerId"
-                label={<span className="text-gray-700 font-semibold">Employer ID</span>}
-                rules={[{ required: true, message: "Please enter employer ID" }]}
-              >
-                <Input size="large" placeholder="Enter employer ID" />
-              </Form.Item>
-
-              <Form.Item
-                name="isActive"
-                label={<span className="text-gray-700 font-semibold">Active Status</span>}
-                rules={[{ required: true, message: "Please select status" }]}
-              >
-                <Select size="large" placeholder="Select status">
-                  <Select.Option value="active">Active</Select.Option>
-                  <Select.Option value="inactive">Inactive</Select.Option>
-                </Select>
-              </Form.Item>
-            </div>
+            <Form.Item
+              name="isActive"
+              label={<span className="text-gray-700 font-semibold">Active Status</span>}
+              rules={[{ required: true, message: "Please select status" }]}
+            >
+              <Select size="large" placeholder="Select status">
+                <Select.Option value={true}>Active</Select.Option>
+                <Select.Option value={false}>Inactive</Select.Option>
+              </Select>
+            </Form.Item>
 
             <Form.Item className="mb-0 mt-6">
               <div className="flex justify-end gap-3">
@@ -677,9 +564,15 @@ export default function JobsPage() {
       {/* View Job Modal */}
       <Modal
         open={isViewModalOpen}
-        onCancel={handleViewModalCancel}
+        onCancel={() => {
+          setIsViewModalOpen(false);
+          setViewingJob(null);
+        }}
         footer={[
-          <Button key="close" onClick={handleViewModalCancel} size="large">
+          <Button key="close" onClick={() => {
+            setIsViewModalOpen(false);
+            setViewingJob(null);
+          }} size="large">
             Close
           </Button>,
         ]}
@@ -740,7 +633,13 @@ export default function JobsPage() {
                 <div>
                   <label className="text-sm font-semibold text-gray-600">Job Type</label>
                   <p className="mt-2">
-                    <Tag className="text-base px-3 py-1">{viewingJob.jobType}</Tag>
+                    <Tag color={
+                      viewingJob.jobType === JobType.FULL_TIME ? "blue" :
+                      viewingJob.jobType === JobType.PART_TIME ? "green" :
+                      viewingJob.jobType === JobType.CONTRACT ? "orange" : "purple"
+                    } className="text-base px-3 py-1">
+                      {viewingJob.jobType.replace('_', ' ')}
+                    </Tag>
                   </p>
                 </div>
                 <div>
@@ -753,7 +652,7 @@ export default function JobsPage() {
                 <div>
                   <label className="text-sm font-semibold text-gray-600">Salary</label>
                   <p className="text-gray-900 mt-1 text-lg">
-                    {viewingJob.salary || <span className="text-gray-400">Not specified</span>}
+                    {viewingJob.salary || <span className="text-gray-400">null</span>}
                   </p>
                 </div>
                 <div>
@@ -764,9 +663,19 @@ export default function JobsPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="text-sm font-semibold text-gray-600">Employer ID</label>
-                <p className="text-gray-900 mt-1 text-lg font-medium">{viewingJob.employerId}</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-semibold text-gray-600">Employer</label>
+                  <p className="text-gray-900 mt-1 text-lg">
+                    {viewingJob.employer?.fullName || <span className="text-gray-400">null</span>}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-gray-600">Company</label>
+                  <p className="text-gray-900 mt-1 text-lg">
+                    {viewingJob.employer?.companyName || <span className="text-gray-400">null</span>}
+                  </p>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
@@ -786,6 +695,146 @@ export default function JobsPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Add Job Modal */}
+      <Modal
+        open={isAddModalOpen}
+        onCancel={handleAddModalCancel}
+        footer={null}
+        width={700}
+        className="top-10"
+      >
+        <div className="bg-gradient-to-r from-primary-green to-primary-green-dark text-white -m-6 mb-6 px-6 py-6 rounded-t-lg">
+          <h2 className="text-3xl font-bold mb-2">Add New Job</h2>
+          <p className="text-white/90">Create a new job posting</p>
+        </div>
+
+        <div className="max-h-[70vh] overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
+          <Form
+            form={addForm}
+            layout="vertical"
+            onFinish={handleAddFormSubmit}
+            className="mt-4"
+          >
+            <Form.Item
+              name="title"
+              label={<span className="text-gray-700 font-semibold">Job Title</span>}
+              rules={[{ required: true, message: "Please enter job title" }]}
+            >
+              <Input size="large" placeholder="e.g., Frontend Developer" />
+            </Form.Item>
+
+            <Form.Item
+              name="description"
+              label={<span className="text-gray-700 font-semibold">Description</span>}
+              rules={[{ required: true, message: "Please enter job description" }]}
+            >
+              <Input.TextArea
+                rows={4}
+                placeholder="Enter job description..."
+                size="large"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="requirements"
+              label={<span className="text-gray-700 font-semibold">Requirements</span>}
+              rules={[{ required: true, message: "Please enter job requirements" }]}
+            >
+              <Input.TextArea
+                rows={4}
+                placeholder="Enter job requirements..."
+                size="large"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="responsibilities"
+              label={<span className="text-gray-700 font-semibold">Responsibilities</span>}
+              rules={[{ required: true, message: "Please enter job responsibilities" }]}
+            >
+              <Input.TextArea
+                rows={4}
+                placeholder="Enter job responsibilities..."
+                size="large"
+              />
+            </Form.Item>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Form.Item
+                name="jobType"
+                label={<span className="text-gray-700 font-semibold">Job Type</span>}
+                rules={[{ required: true, message: "Please select job type" }]}
+              >
+                <Select size="large" placeholder="Select job type">
+                  <Select.Option value={JobType.FULL_TIME}>Full-time</Select.Option>
+                  <Select.Option value={JobType.PART_TIME}>Part-time</Select.Option>
+                  <Select.Option value={JobType.CONTRACT}>Contract</Select.Option>
+                  <Select.Option value={JobType.INTERNSHIP}>Internship</Select.Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="location"
+                label={<span className="text-gray-700 font-semibold">Location</span>}
+                rules={[{ required: true, message: "Please enter location" }]}
+              >
+                <Input size="large" placeholder="e.g., Mogadishu" />
+              </Form.Item>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Form.Item
+                name="salary"
+                label={<span className="text-gray-700 font-semibold">Salary (Optional)</span>}
+              >
+                <Input size="large" placeholder="e.g., $50,000 - $70,000" />
+              </Form.Item>
+
+              <Form.Item
+                name="deadline"
+                label={<span className="text-gray-700 font-semibold">Application Deadline</span>}
+                rules={[{ required: true, message: "Please select deadline" }]}
+              >
+                <DatePicker
+                  size="large"
+                  className="w-full"
+                  showTime
+                  format="YYYY-MM-DD HH:mm"
+                  disabledDate={(current) => current && current < dayjs().startOf('day')}
+                />
+              </Form.Item>
+            </div>
+
+            <Form.Item
+              name="isActive"
+              label={<span className="text-gray-700 font-semibold">Active Status</span>}
+              rules={[{ required: true, message: "Please select status" }]}
+            >
+              <Select size="large" placeholder="Select status">
+                <Select.Option value={true}>Active</Select.Option>
+                <Select.Option value={false}>Inactive</Select.Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item className="mb-0 mt-6">
+              <div className="flex justify-end gap-3">
+                <Button onClick={handleAddModalCancel} size="large">
+                  Cancel
+                </Button>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  size="large"
+                  className="bg-primary-green hover:bg-primary-green-dark border-primary-green"
+                >
+                  Create Job
+                </Button>
+              </div>
+            </Form.Item>
+          </Form>
+        </div>
       </Modal>
     </div>
   );

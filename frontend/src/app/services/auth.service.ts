@@ -21,11 +21,13 @@ export interface RegisterData {
 }
 
 export interface AuthResponse {
-  token: string;
+  access_token: string;
+  expires_at?: string | null;
   user: {
     id: number;
     email: string;
-    fullName: string;
+    fullName?: string;
+    name?: string; // Backend returns 'name' in login response
     role: UserRole;
     companyName?: string;
   };
@@ -33,10 +35,10 @@ export interface AuthResponse {
 
 export const login = async (data: LoginData): Promise<AuthResponse> => {
   const res = await api.post<AuthResponse>("/auth/login", data);
-  const { token, user } = res.data;
+  const { access_token, user } = res.data;
   
   if (typeof window !== "undefined") {
-    localStorage.setItem("token", token);
+    localStorage.setItem("token", access_token);
     localStorage.setItem("userRole", user.role);
     localStorage.setItem("userId", user.id.toString());
   }
@@ -46,10 +48,10 @@ export const login = async (data: LoginData): Promise<AuthResponse> => {
 
 export const register = async (data: RegisterData): Promise<AuthResponse> => {
   const res = await api.post<AuthResponse>("/auth/register", data);
-  const { token, user } = res.data;
+  const { access_token, user } = res.data;
   
   if (typeof window !== "undefined") {
-    localStorage.setItem("token", token);
+    localStorage.setItem("token", access_token);
     localStorage.setItem("userRole", user.role);
     localStorage.setItem("userId", user.id.toString());
   }

@@ -17,39 +17,187 @@ export class UsersService {
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
+    
+    const { companyName, companyLocation, companyDescription, companyWebsite, ...userData } = dto;
+    
     const user = await this.prisma.user.create({
       data: {
-        fullName: dto.fullName,
-        email: dto.email,
+        ...userData,
         password: hashedPassword,
-        role: dto.role,
+        company: dto.companyName ? {
+          create: {
+            name: dto.companyName,
+            location: dto.companyLocation || null,
+            description: dto.companyDescription || null,
+            website: dto.companyWebsite || null,
+          },
+        } : undefined,
+      },
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            website: true,
+            location: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
       },
     });
 
-    // TODO: send verification email using Resend
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...result } = user;
-    return result;
+    const { password, company, ...rest } = user;
+    return {
+      ...rest,
+      companyName: company?.name || null,
+      companyLocation: company?.location || null,
+      companyDescription: company?.description || null,
+      companyWebsite: company?.website || null,
+      companyId: company?.id || null,
+    };
   }
 
   async findAll() {
-    return this.prisma.user.findMany();
+    const users = await this.prisma.user.findMany({
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            website: true,
+            location: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
+    
+    // Transform to include company information from relation
+    return users.map((user) => {
+      const { password, company, ...rest } = user;
+      return {
+        ...rest,
+        companyName: company?.name || null,
+        companyLocation: company?.location || null,
+        companyDescription: company?.description || null,
+        companyWebsite: company?.website || null,
+        companyId: company?.id || null,
+      };
+    });
   }
 
   async findById(id: number) {
-    return this.prisma.user.findUnique({ where: { id } });
+    const user = await this.prisma.user.findUnique({ 
+      where: { id },
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            website: true,
+            location: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
+    
+    if (!user) return null;
+    
+    const { password, company, ...rest } = user;
+    return {
+      ...rest,
+      companyName: company?.name || null,
+      companyLocation: company?.location || null,
+      companyDescription: company?.description || null,
+      companyWebsite: company?.website || null,
+      companyId: company?.id || null,
+    };
   }
 
   async update(id: number, dto: UpdateUserDto) {
     if (dto.password) {
       dto.password = await bcrypt.hash(dto.password, 10);
     }
-    return this.prisma.user.update({
+    
+    // Get existing user to check company
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id },
+      include: { company: true },
+    });
+
+    if (!existingUser) {
+      throw new ConflictException('User not found');
+    }
+
+    // Handle company update/create
+    let companyData: any = {};
+    const { companyName, companyLocation, companyDescription, companyWebsite, ...userData } = dto;
+    
+    if (companyName || companyLocation || companyDescription || companyWebsite) {
+      if (existingUser.company) {
+        // Update existing company
+        companyData = {
+          company: {
+            update: {
+              ...(companyName && { name: companyName }),
+              ...(companyLocation !== undefined && { location: companyLocation || null }),
+              ...(companyDescription !== undefined && { description: companyDescription || null }),
+              ...(companyWebsite !== undefined && { website: companyWebsite || null }),
+            },
+          },
+        };
+      } else if (companyName) {
+        // Create new company
+        companyData = {
+          company: {
+            create: {
+              name: companyName,
+              location: companyLocation || null,
+              description: companyDescription || null,
+              website: companyWebsite || null,
+            },
+          },
+        };
+      }
+    }
+    
+    const user = await this.prisma.user.update({
       where: { id },
       data: {
-        ...dto,
+        ...userData,
+        ...companyData,
+      },
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            website: true,
+            location: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
       },
     });
+    
+    const { password, company, ...rest } = user;
+    return {
+      ...rest,
+      companyName: company?.name || null,
+      companyLocation: company?.location || null,
+      companyDescription: company?.description || null,
+      companyWebsite: company?.website || null,
+      companyId: company?.id || null,
+    };
   }
 
   async remove(id: number) {

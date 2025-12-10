@@ -1,35 +1,95 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Form, Input, Button, Card, message } from "antd";
-import { login } from "@/app/services/auth.service";
+import { login, UserRole } from "@/app/services/auth.service";
+
+// Helper function to get dashboard route based on role
+function getDashboardRoute(role: UserRole): string {
+  if (role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN) {
+    return "/admin/dashboard";
+  } else if (role === UserRole.EMPLOYER) {
+    return "/employer/dashboard";
+  } else if (role === UserRole.JOB_SEEKER) {
+    return "/seeker/dashboard";
+  }
+  return "/";
+}
 
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      const userRole = localStorage.getItem("userRole") as UserRole;
+      
+      if (token && userRole) {
+        // Get the intended destination or use dashboard
+        const intendedPath = localStorage.getItem("intendedPath");
+        if (intendedPath) {
+          localStorage.removeItem("intendedPath");
+          router.replace(intendedPath);
+        } else {
+          router.replace(getDashboardRoute(userRole));
+        }
+      }
+    }
+  }, [router]);
+
   const onFinish = async (values: any) => {
     setLoading(true);
     try {
       const response = await login(values);
-      // Store user role if available in response
-      if (response.user?.role) {
-        localStorage.setItem("userRole", response.user.role);
+      
+      // Get role from response
+      const role = response.user?.role as UserRole;
+      
+      // Debug logging
+      console.log("Login response:", response);
+      console.log("User role:", role);
+      
+      if (!role) {
+        message.error("Unable to determine user role. Please contact support.");
+        setLoading(false);
+        return;
       }
+
       message.success("Login successful!");
       
-      // Redirect based on user role
-      const role = response.user?.role || localStorage.getItem("userRole");
-      if (role === "employer") {
-        router.push("/employer/dashboard");
-      } else if (role === "seeker") {
-        router.push("/seeker/dashboard");
-      } else {
-        router.push("/");
+      // Determine redirect path based on role
+      let redirectPath = getDashboardRoute(role);
+      
+      console.log("✅ Login successful! User role:", role);
+      console.log("📍 Default dashboard path:", redirectPath);
+      
+      // Get intended destination if user was redirected from protected route
+      const intendedPath = localStorage.getItem("intendedPath");
+      
+      // Only use intended path if user has permission for it
+      if (intendedPath) {
+        localStorage.removeItem("intendedPath");
+        // Validate if user can access intended path based on role
+        if (
+          (intendedPath.startsWith("/admin") && (role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN)) ||
+          (intendedPath.startsWith("/employer") && role === UserRole.EMPLOYER) ||
+          (intendedPath.startsWith("/seeker") && role === UserRole.JOB_SEEKER)
+        ) {
+          redirectPath = intendedPath;
+          console.log("📍 Using intended path:", redirectPath);
+        }
       }
+      
+      // Redirect to the appropriate dashboard
+      console.log("🚀 Redirecting to:", redirectPath);
+      router.push(redirectPath);
     } catch (error: any) {
-      message.error(error.message || "Login failed. Please try again.");
+      const errorMessage = error?.response?.data?.message || error?.message || "Login failed. Please try again.";
+      message.error(errorMessage);
+      console.error("Login error:", error);
     } finally {
       setLoading(false);
     }

@@ -14,20 +14,33 @@ export default function RegisterPage() {
   const onFinish = async (values: any) => {
     setLoading(true);
     try {
-      // Map role values to match backend enum
-      const registrationData = {
+      // Ensure companyName is included for employers
+      const registrationData: any = {
         fullName: values.fullName,
         email: values.email,
         password: values.password,
-        role: values.role === "JOB_SEEKER" ? UserRole.JOB_SEEKER : UserRole.EMPLOYER,
-        ...(values.role === "EMPLOYER" && values.companyName && { companyName: values.companyName }),
+        role: values.role === UserRole.JOB_SEEKER ? UserRole.JOB_SEEKER : UserRole.EMPLOYER,
       };
 
+      // Add companyName if role is EMPLOYER (required)
+      if (values.role === UserRole.EMPLOYER) {
+        if (!values.companyName || values.companyName.trim() === "") {
+          message.error("Company name is required for employers!");
+          setLoading(false);
+          return;
+        }
+        registrationData.companyName = values.companyName.trim();
+      }
+
+      console.log("Registration data:", registrationData); // Debug log
       const response = await register(registrationData);
+      console.log("Registration response:", response); // Debug log
       message.success("Registration successful! Please sign in.");
       router.push("/login");
     } catch (error: any) {
-      message.error(error.message || "Registration failed. Please try again.");
+      console.error("Registration error:", error); // Debug log
+      const errorMessage = error?.response?.data?.message || error?.message || "Registration failed. Please try again.";
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -95,10 +108,10 @@ export default function RegisterPage() {
               <Form.Item
                 label={<span className="font-medium text-gray-700">Company Name</span>}
                 name="companyName"
-                rules={[{ required: false, message: "Please enter your company name!" }]}
+                rules={[{ required: true, message: "Company name is required for employers!" }]}
                 className="mb-4"
               >
-                <Input size="large" placeholder="Enter your company name (optional)" className="rounded-lg" />
+                <Input size="large" placeholder="Enter your company name" className="rounded-lg" />
               </Form.Item>
             )}
 

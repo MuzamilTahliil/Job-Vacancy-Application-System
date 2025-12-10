@@ -33,22 +33,38 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
+    const { companyName, companyLocation, companyDescription, companyWebsite, ...userData } = dto;
+    
     const user = await this.prisma.user.create({
       data: {
+        ...userData,
         fullName: dto.fullName,
         email: dto.email,
         password: hashedPassword,
         role: dto.role || 'JOB_SEEKER',
         company: dto.companyName ? {
-            create: {
-                name: dto.companyName
-            }
+          create: {
+            name: dto.companyName,
+            location: dto.companyLocation || null,
+            description: dto.companyDescription || null,
+            website: dto.companyWebsite || null,
+          },
         } : undefined,
       },
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            website: true,
+            location: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
     });
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...result } = user;
 
     const payload: JwtPayload = {
       sub: user.id,
@@ -63,13 +79,35 @@ export class AuthService {
       expires_at: decoded.exp
         ? new Date(decoded.exp * 1000).toISOString()
         : null,
-      user: result,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.fullName,
+        role: user.role,
+        companyName: user.company?.name || null,
+        companyLocation: user.company?.location || null,
+        companyDescription: user.company?.description || null,
+        companyWebsite: user.company?.website || null,
+      },
     };
   }
 
   async login(dto: LoginUserDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            website: true,
+            location: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -100,6 +138,10 @@ export class AuthService {
         email: user.email,
         name: user.fullName,
         role: user.role,
+        companyName: user.company?.name || null,
+        companyLocation: user.company?.location || null,
+        companyDescription: user.company?.description || null,
+        companyWebsite: user.company?.website || null,
       },
     };
   }

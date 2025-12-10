@@ -3,19 +3,19 @@ import api from "./api";
 export enum ApplicationStatus {
   PENDING = "PENDING",
   REVIEWED = "REVIEWED",
-  ACCEPTED = "ACCEPTED",
-  REJECTED = "REJECTED",
   SHORTLISTED = "SHORTLISTED",
+  REJECTED = "REJECTED",
+  ACCEPTED = "ACCEPTED",
 }
 
 export interface Application {
   id: number;
   coverLetter: string;
-  resumeUrl?: string;
+  resumeUrl?: string | null;
   status: ApplicationStatus;
   appliedAt: string;
-  reviewedAt?: string;
-  notes?: string;
+  reviewedAt?: string | null;
+  notes?: string | null;
   jobId: number;
   applicantId: number;
   createdAt: string;
@@ -24,12 +24,26 @@ export interface Application {
     id: number;
     title: string;
     location: string;
-    employerId: number;
+    jobType: string;
   };
   applicant?: {
     id: number;
     fullName: string;
     email: string;
+    phoneNumber?: string | null;
+  };
+  job?: {
+    id: number;
+    title: string;
+    location: string;
+    jobType: string;
+    employerId?: number;
+    employer?: {
+      id: number;
+      fullName: string;
+      email: string;
+      role?: string;
+    };
   };
 }
 
@@ -41,16 +55,15 @@ export interface CreateApplicationDto {
 
 export interface UpdateApplicationStatusDto {
   status: ApplicationStatus;
-  notes?: string;
 }
 
-// Get all applications for the current user
-export const getMyApplications = async (): Promise<Application[]> => {
+// Get all applications for current user's jobs (admin/employer) or applications submitted by user (job seeker)
+export const getApplications = async (): Promise<Application[]> => {
   const res = await api.get<Application[]>("/applications");
   return res.data;
 };
 
-// Get all applications for a specific job (Employer only)
+// Get applications for a specific job
 export const getJobApplications = async (jobId: number): Promise<Application[]> => {
   const res = await api.get<Application[]>(`/applications/job/${jobId}`);
   return res.data;
@@ -68,12 +81,11 @@ export const createApplication = async (data: CreateApplicationDto): Promise<App
   return res.data;
 };
 
-// Update application status (Employer only)
+// Update application status
 export const updateApplicationStatus = async (
   id: number,
-  data: UpdateApplicationStatusDto
+  status: ApplicationStatus
 ): Promise<Application> => {
-  const res = await api.patch<Application>(`/applications/${id}/status`, data);
+  const res = await api.patch<Application>(`/applications/${id}/status`, { status });
   return res.data;
 };
-

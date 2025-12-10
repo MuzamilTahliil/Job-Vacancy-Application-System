@@ -109,6 +109,83 @@ export class ApplicationsService {
     });
   }
 
+  async findMyJobApplications(userId: number) {
+    // Get all applications for jobs where the user is the employer
+    // For regular employers, only show their own job applications
+    const userJobs = await this.prisma.job.findMany({
+      where: { employerId: userId },
+      select: { id: true },
+    });
+    
+    const userJobIds = userJobs.map(job => job.id);
+    
+    if (userJobIds.length === 0) {
+      return [];
+    }
+    
+    return this.prisma.application.findMany({
+      where: {
+        jobId: {
+          in: userJobIds,
+        },
+      },
+      include: {
+        job: {
+          select: {
+            id: true,
+            title: true,
+            location: true,
+            jobType: true,
+            employerId: true,
+          },
+        },
+        applicant: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phoneNumber: true,
+          },
+        },
+      },
+      orderBy: { appliedAt: 'desc' },
+    });
+  }
+
+  async findAllApplications() {
+    // Get ALL applications (for admins to view)
+    return this.prisma.application.findMany({
+      include: {
+        job: {
+          select: {
+            id: true,
+            title: true,
+            location: true,
+            jobType: true,
+            employerId: true,
+            employer: {
+              select: {
+                id: true,
+                fullName: true,
+                email: true,
+                role: true,
+              },
+            },
+          },
+        },
+        applicant: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phoneNumber: true,
+          },
+        },
+      },
+      orderBy: { appliedAt: 'desc' },
+    });
+  }
+
   async findOne(userId: number, userRole: string, id: number) {
     const application = await this.prisma.application.findUnique({
       where: { id },
@@ -125,7 +202,8 @@ export class ApplicationsService {
     }
 
     // 3. Logic check:
-    if (userRole === UserRole.ADMIN) {
+    if (userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN) {
+      // Admins can view all applications (no restriction)
       return application;
     }
 
@@ -145,13 +223,25 @@ export class ApplicationsService {
 
   async updateStatus(
     userId: number,
+    userRole: string,
     id: number,
     updateApplicationStatusDto: UpdateApplicationStatusDto,
   ) {
-    // 1. Fetch application
+    // 1. Fetch application with job and employer info
     const application = await this.prisma.application.findUnique({
       where: { id },
-      include: { job: true },
+      include: {
+        job: {
+          include: {
+            employer: {
+              select: {
+                id: true,
+                role: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!application) {
@@ -159,8 +249,20 @@ export class ApplicationsService {
     }
 
     // 2. Verify ownership
-    if (application.job.employerId !== userId) {
-      throw new ForbiddenException('You can only update applications for your own jobs');
+    const isOwnJob = application.job.employerId === userId;
+    const isJobOwnerAdmin = application.job.employer.role === UserRole.ADMIN || application.job.employer.role === UserRole.SUPER_ADMIN;
+    const isCurrentUserAdmin = userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN;
+
+    if (isCurrentUserAdmin) {
+      // Admins can only update applications for their own jobs OR jobs created by other admins
+      if (!isOwnJob && !isJobOwnerAdmin) {
+        throw new ForbiddenException('You can only update applications for your own jobs or jobs created by admins');
+      }
+    } else {
+      // Regular employers can only update applications for their own jobs
+      if (!isOwnJob) {
+        throw new ForbiddenException('You can only update applications for your own jobs');
+      }
     }
 
     // 3. Update status
@@ -169,6 +271,25 @@ export class ApplicationsService {
       data: {
         status: updateApplicationStatusDto.status,
         reviewedAt: new Date(),
+      },
+      include: {
+        job: {
+          select: {
+            id: true,
+            title: true,
+            location: true,
+            jobType: true,
+            employerId: true,
+          },
+        },
+        applicant: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phoneNumber: true,
+          },
+        },
       },
     });
   }

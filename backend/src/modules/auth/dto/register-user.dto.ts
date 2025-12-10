@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 import { UserRole } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -29,10 +30,38 @@ export class RegisterUserDto {
   @MinLength(6, { message: 'Password must be at least 6 characters' })
   password!: string;
 
-  @ApiPropertyOptional({ example: 'Tech Corp', description: 'Company name (for employers)' })
+  @ApiPropertyOptional({ 
+    example: 'Tech Corp', 
+    description: 'Company name (required for employers)' 
+  })
+  @ValidateIf((o) => o.role === UserRole.EMPLOYER)
+  @IsString({ message: 'Company name must be a string' })
+  @IsNotEmpty({ message: 'Company name is required for employers' })
+  companyName?: string;
+
+  @ApiPropertyOptional({ 
+    example: 'Mogadishu, Somalia', 
+    description: 'Company location' 
+  })
   @IsString()
   @IsOptional()
-  companyName?: string;
+  companyLocation?: string;
+
+  @ApiPropertyOptional({ 
+    example: 'A leading technology company specializing in software solutions...', 
+    description: 'Company description' 
+  })
+  @IsString()
+  @IsOptional()
+  companyDescription?: string;
+
+  @ApiPropertyOptional({ 
+    example: 'https://www.techcorp.com', 
+    description: 'Company website' 
+  })
+  @IsString()
+  @IsOptional()
+  companyWebsite?: string;
 
   @ApiPropertyOptional({
     enum: UserRole,

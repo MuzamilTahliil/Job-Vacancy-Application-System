@@ -44,6 +44,21 @@ export class CreateUserDto {
   @IsString()
   @IsOptional()
   companyName?: string;
+
+  @ApiProperty({ example: 'Mogadishu, Somalia', description: 'Company Location', required: false })
+  @IsString()
+  @IsOptional()
+  companyLocation?: string;
+
+  @ApiProperty({ example: 'A leading technology company...', description: 'Company Description', required: false })
+  @IsString()
+  @IsOptional()
+  companyDescription?: string;
+
+  @ApiProperty({ example: 'https://www.acmecorp.com', description: 'Company Website', required: false })
+  @IsString()
+  @IsOptional()
+  companyWebsite?: string;
 }
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {}

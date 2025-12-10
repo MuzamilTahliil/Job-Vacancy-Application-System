@@ -1,16 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ApplicationStatus } from '@prisma/client';
-import { IsEnum, IsInt, IsNotEmpty } from 'class-validator';
+import { IsEnum, IsNotEmpty } from 'class-validator';
 
 export class UpdateApplicationStatusDto {
-  @ApiProperty({
-    example: 2,
-    description: 'The ID of the user updating the status (employer)',
-  })
-  @IsInt({ message: 'User ID must be an integer' })
-  @IsNotEmpty({ message: 'User ID is required' })
-  userId!: number;
-
   @ApiProperty({
     enum: ApplicationStatus,
     example: ApplicationStatus.SHORTLISTED,

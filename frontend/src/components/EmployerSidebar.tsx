@@ -9,14 +9,14 @@ import {
   ProfileOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
+import { logout } from "@/app/services/auth.service";
 
 export default function EmployerSidebar() {
   const router = useRouter();
   const pathname = usePathname();
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userRole");
+    logout();
     router.push("/");
   };
 

@@ -7,7 +7,10 @@ export interface User {
   fullName: string;
   phoneNumber?: string;
   role: UserRole;
-  companyName?: string;
+  companyName?: string | null;
+  companyLocation?: string | null;
+  companyDescription?: string | null;
+  companyWebsite?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -18,6 +21,9 @@ export interface CreateUserDto {
   fullName: string;
   role: UserRole;
   companyName?: string;
+  companyLocation?: string;
+  companyDescription?: string;
+  companyWebsite?: string;
 }
 
 export interface UpdateUserDto extends Partial<CreateUserDto> {}
@@ -37,6 +43,12 @@ export const getUserById = async (id: number): Promise<User> => {
 // Get current user profile
 export const getCurrentUser = async (): Promise<User> => {
   const res = await api.get<User>("/users/profile");
+  return res.data;
+};
+
+// Update current user profile
+export const updateCurrentUserProfile = async (user: UpdateUserDto): Promise<User> => {
+  const res = await api.patch<User>("/users/profile", user);
   return res.data;
 };
 

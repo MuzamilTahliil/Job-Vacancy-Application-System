@@ -25,6 +25,7 @@ export interface Job {
     id: number;
     fullName: string;
     email: string;
+    role?: string;
     companyName?: string;
   };
 }

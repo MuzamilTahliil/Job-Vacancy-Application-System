@@ -41,3 +41,15 @@ export const updateMyProfile = async (data: UpdateProfileDto): Promise<JobSeeker
   return res.data;
 };
 
+// Get all job seekers (Admin only)
+export const getAllJobSeekers = async (): Promise<JobSeekerProfile[]> => {
+  const res = await api.get<JobSeekerProfile[]>("/profiles/all");
+  return res.data;
+};
+
+// Update job seeker profile by userId (Admin only)
+export const updateJobSeekerProfile = async (userId: number, data: UpdateProfileDto): Promise<JobSeekerProfile> => {
+  const res = await api.patch<JobSeekerProfile>(`/profiles/${userId}`, data);
+  return res.data;
+};
+

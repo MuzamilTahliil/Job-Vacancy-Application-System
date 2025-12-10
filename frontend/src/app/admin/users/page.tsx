@@ -1,163 +1,119 @@
 "use client";
 
-import { useState } from "react";
-import { Table, Button, Tag, Space, Input, message, Popconfirm, Modal, Form, Select } from "antd";
-import { SearchOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { useState, useEffect } from "react";
+import { Table, Button, Tag, Space, Input, message, Popconfirm, Modal, Select, Spin, Tooltip } from "antd";
+import { SearchOutlined, DeleteOutlined, EyeOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
-
-interface User {
-  id: string;
-  email: string;
-  password: string;
-  fullName: string;
-  phoneNumber?: string;
-  role: "JOB_SEEKER" | "EMPLOYER" | "ADMIN";
-  companyName?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Mock data - replace with actual API calls
-const mockUsers: User[] = [
-  {
-    id: "1",
-    email: "john@example.com",
-    password: "hashed_password",
-    fullName: "John Doe",
-    phoneNumber: "+252 63 1234567",
-    role: "JOB_SEEKER",
-    createdAt: "2024-01-15T10:00:00Z",
-    updatedAt: "2024-01-15T10:00:00Z",
-  },
-  {
-    id: "2",
-    email: "jane@example.com",
-    password: "hashed_password",
-    fullName: "Jane Smith",
-    phoneNumber: "+252 63 7654321",
-    role: "EMPLOYER",
-    companyName: "Tech Solutions Inc",
-    createdAt: "2024-01-20T10:00:00Z",
-    updatedAt: "2024-01-20T10:00:00Z",
-  },
-  {
-    id: "3",
-    email: "admin@example.com",
-    password: "hashed_password",
-    fullName: "Admin User",
-    phoneNumber: "+252 63 9876543",
-    role: "ADMIN",
-    createdAt: "2024-02-01T10:00:00Z",
-    updatedAt: "2024-02-01T10:00:00Z",
-  },
-];
+import { getUsers, deleteUser, User } from "@/app/services/users.service";
+import { UserRole } from "@/app/services/auth.service";
 
 export default function UsersPage() {
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [editForm] = Form.useForm();
+  const [roleFilter, setRoleFilter] = useState<UserRole | "ALL">("ALL");
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewingUser, setViewingUser] = useState<User | null>(null);
+  const [currentUserRole, setCurrentUserRole] = useState<UserRole | null>(null);
 
-  const handleDelete = (id: string) => {
-    setUsers(users.filter((user) => user.id !== id));
-    message.success("User deleted successfully");
-  };
-
-  const handleEdit = (id: string) => {
-    const user = users.find((u) => u.id === id);
-    if (user) {
-      setEditingUser(user);
-      setIsEditModalOpen(true);
-      editForm.setFieldsValue({
-        fullName: user.fullName,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        role: user.role,
-        companyName: user.companyName,
-      });
+  // Get current user role
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const role = localStorage.getItem("userRole") as UserRole;
+      setCurrentUserRole(role);
     }
-  };
+  }, []);
 
-  const handleEditModalCancel = () => {
-    setIsEditModalOpen(false);
-    setEditingUser(null);
-    editForm.resetFields();
-  };
+  // Fetch users from backend
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
-  const handleEditFormSubmit = async (values: any) => {
-    if (!editingUser) return;
-
+  const fetchUsers = async () => {
     try {
-      const updatedUsers = users.map((user) =>
-        user.id === editingUser.id
-          ? {
-              ...user,
-              fullName: values.fullName,
-              email: values.email,
-              phoneNumber: values.phoneNumber || undefined,
-              role: values.role,
-              companyName: values.companyName || undefined,
-              updatedAt: new Date().toISOString(),
-            }
-          : user
-      );
-
-      setUsers(updatedUsers);
-      message.success("User updated successfully!");
-      setIsEditModalOpen(false);
-      setEditingUser(null);
-      editForm.resetFields();
-    } catch (error) {
-      message.error("Failed to update user");
-      console.error(error);
+      setLoading(true);
+      const allUsers = await getUsers();
+      // Show all users
+      setUsers(allUsers);
+    } catch (error: any) {
+      console.error("Error fetching users:", error);
+      message.error("Failed to fetch users. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const filteredUsers = users.filter(
-    (user) =>
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteUser(id);
+      setUsers(users.filter((user) => user.id !== id));
+      message.success("User deleted successfully");
+    } catch (error: any) {
+      console.error("Error deleting user:", error);
+      message.error("Failed to delete user. Please try again.");
+    }
+  };
+
+
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
       user.fullName.toLowerCase().includes(searchText.toLowerCase()) ||
       user.email.toLowerCase().includes(searchText.toLowerCase()) ||
-      user.companyName?.toLowerCase().includes(searchText.toLowerCase())
-  );
+      user.companyName?.toLowerCase().includes(searchText.toLowerCase());
+    
+    const matchesRole = roleFilter === "ALL" || user.role === roleFilter;
+    
+    return matchesSearch && matchesRole;
+  });
+
+  const handleView = (id: number) => {
+    const user = users.find((u) => u.id === id);
+    if (user) {
+      setViewingUser(user);
+      setIsViewModalOpen(true);
+    }
+  };
 
   const columns: ColumnsType<User> = [
     {
       title: "ID",
       dataIndex: "id",
       key: "id",
-      width: 80,
+      width: 100,
+      fixed: "left",
     },
     {
       title: "Full Name",
       dataIndex: "fullName",
       key: "fullName",
       sorter: (a, b) => a.fullName.localeCompare(b.fullName),
-      width: 150,
+      width: 200,
     },
     {
       title: "Email",
       dataIndex: "email",
       key: "email",
-      width: 200,
+      width: 250,
     },
     {
       title: "Phone Number",
       dataIndex: "phoneNumber",
       key: "phoneNumber",
-      width: 150,
-      render: (phone: string) => phone || <span className="text-gray-400">Not provided</span>,
+      width: 180,
+      render: (phone: string) => phone || <span className="text-gray-400">null</span>,
     },
     {
       title: "Role",
       dataIndex: "role",
       key: "role",
-      width: 120,
+      width: 140,
       render: (role: string) => {
         const color =
-          role === "ADMIN"
+          role === UserRole.SUPER_ADMIN
+            ? "purple"
+            : role === UserRole.ADMIN
             ? "red"
-            : role === "EMPLOYER"
+            : role === UserRole.EMPLOYER
             ? "blue"
             : "green";
         return <Tag color={color}>{role.replace('_', ' ')}</Tag>;
@@ -167,14 +123,28 @@ export default function UsersPage() {
       title: "Company Name",
       dataIndex: "companyName",
       key: "companyName",
-      width: 150,
-      render: (company: string) => company || <span className="text-gray-400">N/A</span>,
+      width: 220,
+      sorter: (a, b) => {
+        const aCompany = a.companyName || "";
+        const bCompany = b.companyName || "";
+        return aCompany.localeCompare(bCompany);
+      },
+      render: (company: string, record: User) => {
+        if (record.role === UserRole.EMPLOYER) {
+          return company ? (
+            <span className="font-medium text-gray-800">{company}</span>
+          ) : (
+            <span className="text-gray-400">null</span>
+          );
+        }
+        return <span className="text-gray-400">null</span>;
+      },
     },
     {
       title: "Created At",
       dataIndex: "createdAt",
       key: "createdAt",
-      width: 150,
+      width: 160,
       sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       render: (createdAt: string) => new Date(createdAt).toLocaleDateString(),
     },
@@ -182,35 +152,50 @@ export default function UsersPage() {
       title: "Updated At",
       dataIndex: "updatedAt",
       key: "updatedAt",
-      width: 150,
+      width: 160,
       sorter: (a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
       render: (updatedAt: string) => new Date(updatedAt).toLocaleDateString(),
     },
     {
       title: "Actions",
       key: "actions",
-      render: (_, record) => (
-        <Space size="middle">
-          <Button
-            type="link"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record.id)}
-          >
-            Edit
-          </Button>
-          <Popconfirm
-            title="Delete user"
-            description="Are you sure you want to delete this user?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button type="link" danger icon={<DeleteOutlined />}>
-              Delete
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
+      fixed: "right",
+      width: 150,
+      render: (_, record) => {
+        // Show delete for all users (admin can delete anyone)
+        const canDelete = currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.SUPER_ADMIN;
+
+        return (
+          <Space size="large">
+            <Tooltip title="View User">
+              <Button
+                type="text"
+                icon={<EyeOutlined />}
+                onClick={() => handleView(record.id)}
+                className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+              />
+            </Tooltip>
+            {canDelete && (
+              <Popconfirm
+                title="Delete user"
+                description="Are you sure you want to delete this user?"
+                onConfirm={() => handleDelete(record.id)}
+                okText="Yes"
+                cancelText="No"
+              >
+                <Tooltip title="Delete User">
+                  <Button
+                    type="text"
+                    danger
+                    icon={<DeleteOutlined />}
+                    className="hover:bg-red-50"
+                  />
+                </Tooltip>
+              </Popconfirm>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 
@@ -220,110 +205,200 @@ export default function UsersPage() {
         <h1 className="text-3xl font-bold text-gray-800">Users Management</h1>
       </div>
 
-      <div className="mb-4">
+      <div className="mb-6 flex gap-4 flex-wrap">
         <Input
           size="large"
-          placeholder="Search users by name or email..."
+          placeholder="Search users by name, email, or company..."
           prefix={<SearchOutlined />}
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          className="max-w-md"
+          className="max-w-md flex-1 min-w-[300px]"
         />
+        <Select
+          size="large"
+          placeholder="Filter by Role"
+          value={roleFilter}
+          onChange={(value) => setRoleFilter(value)}
+          className="w-[200px]"
+          allowClear
+        >
+          <Select.Option value="ALL">All Roles</Select.Option>
+          <Select.Option value={UserRole.ADMIN}>Admin</Select.Option>
+          <Select.Option value={UserRole.SUPER_ADMIN}>Super Admin</Select.Option>
+          <Select.Option value={UserRole.EMPLOYER}>Employer</Select.Option>
+          <Select.Option value={UserRole.JOB_SEEKER}>Job Seeker</Select.Option>
+        </Select>
       </div>
 
-      <Table
-        columns={columns}
-        dataSource={filteredUsers}
-        rowKey="id"
-        pagination={{ pageSize: 10 }}
-        className="bg-white rounded-lg shadow-sm"
-        scroll={{ x: 1200 }}
-      />
+      {loading ? (
+        <div className="flex justify-center items-center py-20">
+          <Spin size="large" />
+        </div>
+      ) : (
+        <Table
+          columns={columns}
+          dataSource={filteredUsers}
+          rowKey="id"
+          pagination={{ 
+            pageSize: 10,
+            showSizeChanger: true,
+            showTotal: (total) => `Total ${total} users`,
+            pageSizeOptions: ['10', '20', '50', '100'],
+          }}
+          className="bg-white rounded-lg shadow-sm"
+          scroll={{ x: 1500 }}
+          loading={loading}
+          size="middle"
+        />
+      )}
 
-      {/* Edit User Modal */}
+      {/* View User Modal */}
       <Modal
-        open={isEditModalOpen}
-        onCancel={handleEditModalCancel}
-        footer={null}
-        width={600}
+        open={isViewModalOpen}
+        onCancel={() => {
+          setIsViewModalOpen(false);
+          setViewingUser(null);
+        }}
+        footer={[
+          <Button key="close" onClick={() => {
+            setIsViewModalOpen(false);
+            setViewingUser(null);
+          }}>
+            Close
+          </Button>,
+        ]}
+        width={800}
         className="top-10"
       >
-        {/* Beautiful Header */}
         <div className="bg-gradient-to-r from-primary-green to-primary-green-dark text-white -m-6 mb-6 px-6 py-6 rounded-t-lg">
-          <h2 className="text-3xl font-bold mb-2">Edit User</h2>
-          <p className="text-white/90">Update user information</p>
+          <h2 className="text-3xl font-bold mb-2">User Details</h2>
+          <p className="text-white/90">View user information</p>
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
-          <Form
-            form={editForm}
-            layout="vertical"
-            onFinish={handleEditFormSubmit}
-            className="mt-4"
-          >
-            <Form.Item
-              name="fullName"
-              label={<span className="text-gray-700 font-semibold">Full Name</span>}
-              rules={[{ required: true, message: "Please enter full name" }]}
-            >
-              <Input size="large" placeholder="Enter full name" />
-            </Form.Item>
-
-            <Form.Item
-              name="email"
-              label={<span className="text-gray-700 font-semibold">Email</span>}
-              rules={[
-                { required: true, message: "Please enter email" },
-                { type: "email", message: "Please enter a valid email" },
-              ]}
-            >
-              <Input size="large" placeholder="Enter email address" />
-            </Form.Item>
-
-            <Form.Item
-              name="phoneNumber"
-              label={<span className="text-gray-700 font-semibold">Phone Number (Optional)</span>}
-            >
-              <Input size="large" placeholder="Enter phone number" />
-            </Form.Item>
-
-            <Form.Item
-              name="role"
-              label={<span className="text-gray-700 font-semibold">Role</span>}
-              rules={[{ required: true, message: "Please select role" }]}
-            >
-              <Select size="large" placeholder="Select role">
-                <Select.Option value="JOB_SEEKER">Job Seeker</Select.Option>
-                <Select.Option value="EMPLOYER">Employer</Select.Option>
-                <Select.Option value="ADMIN">Admin</Select.Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="companyName"
-              label={<span className="text-gray-700 font-semibold">Company Name (Optional)</span>}
-            >
-              <Input size="large" placeholder="Enter company name" />
-            </Form.Item>
-
-            <Form.Item className="mb-0 mt-6">
-              <div className="flex justify-end gap-3">
-                <Button onClick={handleEditModalCancel} size="large">
-                  Cancel
-                </Button>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  size="large"
-                  className="bg-primary-green hover:bg-primary-green-dark border-primary-green"
-                >
-                  Update User
-                </Button>
+        {viewingUser && (
+          <div className="space-y-6">
+            {/* Personal Information Section */}
+            <div>
+              <h3 className="text-xl font-bold text-gray-800 mb-4 pb-2 border-b-2 border-primary-green">
+                Personal Information
+              </h3>
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="text-gray-500 text-sm font-medium block mb-2">User ID</label>
+                  <p className="text-gray-800 text-base font-medium">{viewingUser.id}</p>
+                </div>
+                <div>
+                  <label className="text-gray-500 text-sm font-medium block mb-2">Role</label>
+                  <div>
+                    <Tag
+                      color={
+                        viewingUser.role === UserRole.SUPER_ADMIN
+                          ? "purple"
+                          : viewingUser.role === UserRole.ADMIN
+                          ? "red"
+                          : viewingUser.role === UserRole.EMPLOYER
+                          ? "blue"
+                          : "green"
+                      }
+                      className="text-sm px-3 py-1"
+                    >
+                      {viewingUser.role.replace('_', ' ')}
+                    </Tag>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-gray-500 text-sm font-medium block mb-2">Full Name</label>
+                  <p className="text-gray-800 text-base">{viewingUser.fullName}</p>
+                </div>
+                <div>
+                  <label className="text-gray-500 text-sm font-medium block mb-2">Email Address</label>
+                  <p className="text-gray-800 text-base">{viewingUser.email}</p>
+                </div>
+                <div>
+                  <label className="text-gray-500 text-sm font-medium block mb-2">Phone Number</label>
+                  <p className="text-gray-800 text-base">
+                    {viewingUser.phoneNumber || (
+                      <span className="text-gray-400">null</span>
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-gray-500 text-sm font-medium block mb-2">Account Created</label>
+                  <p className="text-gray-800 text-base">
+                    {new Date(viewingUser.createdAt).toLocaleString()}
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <label className="text-gray-500 text-sm font-medium block mb-2">Last Updated</label>
+                  <p className="text-gray-800 text-base">
+                    {new Date(viewingUser.updatedAt).toLocaleString()}
+                  </p>
+                </div>
               </div>
-            </Form.Item>
-          </Form>
-        </div>
+            </div>
+
+            {/* Company Information Section */}
+            {viewingUser.role === UserRole.EMPLOYER && (
+              <div>
+                <h3 className="text-xl font-bold text-gray-800 mb-4 pb-2 border-b-2 border-primary-green">
+                  Company Information
+                </h3>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="col-span-2">
+                    <label className="text-gray-500 text-sm font-medium block mb-2">Company Name</label>
+                    {viewingUser.companyName ? (
+                      <p className="text-gray-800 text-base font-semibold">{viewingUser.companyName}</p>
+                    ) : (
+                      <p className="text-gray-400 text-base">null</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-gray-500 text-sm font-medium block mb-2">Company Location</label>
+                    {viewingUser.companyLocation ? (
+                      <p className="text-gray-800 text-base">{viewingUser.companyLocation}</p>
+                    ) : (
+                      <p className="text-gray-400 text-base">null</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-gray-500 text-sm font-medium block mb-2">Company Website</label>
+                    {viewingUser.companyWebsite ? (
+                      <a
+                        href={viewingUser.companyWebsite.startsWith('http') ? viewingUser.companyWebsite : `https://${viewingUser.companyWebsite}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 hover:underline text-base"
+                      >
+                        {viewingUser.companyWebsite}
+                      </a>
+                    ) : (
+                      <p className="text-gray-400 text-base">null</p>
+                    )}
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-gray-500 text-sm font-medium block mb-2">Company Description</label>
+                    {viewingUser.companyDescription ? (
+                      <p className="text-gray-800 text-base whitespace-pre-wrap">{viewingUser.companyDescription}</p>
+                    ) : (
+                      <p className="text-gray-400 text-base">null</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Show message if user is not an employer */}
+            {viewingUser.role !== UserRole.EMPLOYER && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <p className="text-gray-600 text-sm">
+                  This user is a <span className="font-semibold">{viewingUser.role.replace('_', ' ')}</span> and does not have associated company information.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </Modal>
+
     </div>
   );
 }

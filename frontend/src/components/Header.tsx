@@ -4,38 +4,48 @@ import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "antd";
 import { MenuOutlined, CloseOutlined } from "@ant-design/icons";
+import { UserRole, logout } from "@/app/services/auth.service";
 
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
 
   useEffect(() => {
     // Check if user is authenticated
     const token = localStorage.getItem("token");
-    const role = localStorage.getItem("userRole");
+    const role = localStorage.getItem("userRole") as UserRole;
     setIsAuthenticated(!!token);
     setUserRole(role);
   }, [pathname]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userRole");
+    logout();
     setIsAuthenticated(false);
     setUserRole(null);
     router.push("/");
   };
 
   const handleDashboard = () => {
-    if (userRole === "admin") {
+    if (userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN) {
       router.push("/admin/dashboard");
-    } else if (userRole === "employer") {
+    } else if (userRole === UserRole.EMPLOYER) {
       router.push("/employer/dashboard");
-    } else if (userRole === "seeker") {
+    } else if (userRole === UserRole.JOB_SEEKER) {
       router.push("/seeker/dashboard");
+    } else {
+      router.push("/");
     }
+  };
+
+  const handleSignIn = () => {
+    // Clear any intended path when clicking sign in from header (user-initiated)
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("intendedPath");
+    }
+    router.push("/login");
   };
 
   const menuItems = [
@@ -83,23 +93,23 @@ export default function Header() {
           {isAuthenticated ? (
             <>
               <Button
-                type="primary"
                 onClick={handleDashboard}
-                className="h-10 px-6 font-semibold rounded-lg bg-gradient-to-r from-primary-green to-primary-green-dark border-none hover:from-primary-green-dark hover:to-[#047857] transition-all duration-300 hover:-translate-y-0.5"
+                className="h-10 px-6 text-primary-green border-primary-green font-medium rounded-lg hover:text-primary-green-dark hover:border-primary-green-dark hover:bg-primary-green-light transition-all duration-300 hover:-translate-y-0.5"
               >
                 Dashboard
               </Button>
               <Button
+                type="primary"
                 onClick={handleLogout}
-                className="h-10 px-5 text-gray-600 border-gray-300 rounded-lg hover:text-red-500 hover:border-red-500 hover:bg-red-50 transition-all duration-300"
+                className="h-10 px-6 font-semibold rounded-lg bg-gradient-to-r from-primary-green to-primary-green-dark border-none shadow-lg hover:shadow-xl hover:from-primary-green-dark hover:to-[#047857] transition-all duration-300 hover:-translate-y-1"
               >
-                Sign Out
+                Logout
               </Button>
             </>
           ) : (
             <>
               <Button
-                onClick={() => router.push("/login")}
+                onClick={handleSignIn}
                 className="h-10 px-6 text-primary-green border-primary-green font-medium rounded-lg hover:text-primary-green-dark hover:border-primary-green-dark hover:bg-primary-green-light transition-all duration-300 hover:-translate-y-0.5"
               >
                 Sign In
@@ -149,25 +159,25 @@ export default function Header() {
             {isAuthenticated ? (
               <>
                 <Button
-                  type="primary"
                   block
                   onClick={() => {
                     handleDashboard();
                     setIsMenuOpen(false);
                   }}
-                  className="h-12 font-semibold rounded-lg bg-gradient-to-r from-primary-green to-primary-green-dark border-none"
+                  className="h-12 text-primary-green border-primary-green font-medium rounded-lg"
                 >
                   Dashboard
                 </Button>
                 <Button
+                  type="primary"
                   block
                   onClick={() => {
                     handleLogout();
                     setIsMenuOpen(false);
                   }}
-                  className="h-12 text-gray-600 border-gray-300 rounded-lg hover:text-red-500 hover:border-red-500"
+                  className="h-12 font-semibold rounded-lg bg-gradient-to-r from-primary-green to-primary-green-dark border-none"
                 >
-                  Sign Out
+                  Logout
                 </Button>
               </>
             ) : (
@@ -175,7 +185,7 @@ export default function Header() {
                 <Button
                   block
                   onClick={() => {
-                    router.push("/login");
+                    handleSignIn();
                     setIsMenuOpen(false);
                   }}
                   className="h-12 text-primary-green border-primary-green font-medium rounded-lg"
