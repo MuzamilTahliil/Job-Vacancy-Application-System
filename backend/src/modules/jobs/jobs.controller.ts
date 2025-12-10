@@ -53,6 +53,25 @@ export class JobsController {
     return this.jobsService.getJobViewersForEmployer(employerId);
   }
 
+  @Get('viewed/jobseekers')
+  @UseGuards(JwtAuthGuard)
+  getJobSeekersWhoViewed(@Req() req: AuthenticatedRequest) {
+    console.log(`[JobsController] Getting job seekers who viewed jobs for employer: ${req.user.id}`);
+    const employerId = req.user.id;
+    return this.jobsService.getJobSeekersWhoViewedJobs(employerId);
+  }
+
+  @Post(':id/view')
+  @Public()
+  trackView(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    console.log(`[JobsController] Track view request - jobId: ${id}, user: ${req.user?.id || 'anonymous'}`);
+    const viewerId = req.user?.id || null;
+    return this.jobsService.trackView(id, viewerId);
+  }
+
   @Get(':id')
   @Public()
   @ApiFindOneJob()
@@ -87,15 +106,5 @@ export class JobsController {
   ) {
     const userId = req.user.id;
     return this.jobsService.remove(userId, id);
-  }
-
-  @Post(':id/view')
-  @Public()
-  trackView(
-    @Req() req: AuthenticatedRequest,
-    @Param('id', ParseIntPipe) id: number,
-  ) {
-    const viewerId = req.user?.id || null;
-    return this.jobsService.trackView(id, viewerId);
   }
 }

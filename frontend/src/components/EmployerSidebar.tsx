@@ -27,11 +27,11 @@ export default function EmployerSidebar() {
       icon: <DashboardOutlined />,
       label: "Dashboard",
     },
-    {
-      key: "/employer/job-seekers",
-      icon: <TeamOutlined />,
-      label: "Job Seekers",
-    },
+    // {
+    //   key: "/employer/job-seekers",
+    //   icon: <TeamOutlined />,
+    //   label: "Job Seekers",
+    // },
     {
       key: "/employer/jobs",
       icon: <BuildOutlined />,

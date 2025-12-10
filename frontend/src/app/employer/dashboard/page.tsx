@@ -81,9 +81,9 @@ export default function EmployerDashboard() {
         return myJobs.some(j => j.id === a.jobId);
       });
 
-      // Calculate total views
-      const totalViews = myJobs.reduce((sum, job) => {
-        return sum + (jobViews[job.id] || 0);
+      // Calculate total views from the views array (all job seeker clicks/views)
+      const totalViews = views.reduce((sum, view) => {
+        return sum + view.viewCount;
       }, 0);
 
       setStats({

@@ -83,8 +83,11 @@ export const deleteJob = async (id: number): Promise<void> => {
 };
 
 // Track a job view
-export const trackJobView = async (jobId: number): Promise<void> => {
-  await api.post(`/jobs/${jobId}/view`);
+export const trackJobView = async (jobId: number): Promise<any> => {
+  console.log(`[JobsService] Calling trackJobView for jobId: ${jobId}`);
+  const res = await api.post(`/jobs/${jobId}/view`);
+  console.log(`[JobsService] Track view response:`, res.data);
+  return res.data;
 };
 
 // Get job views for employer
@@ -106,9 +109,16 @@ export interface JobViewer {
     phoneNumber: string | null;
   } | null;
   viewedAt: string;
+  viewCount?: number; // Number of times this job seeker viewed this job
 }
 
 export const getJobViewersForEmployer = async (): Promise<JobViewer[]> => {
   const res = await api.get<JobViewer[]>("/jobs/viewers/employer");
+  return res.data;
+};
+
+// Get unique job seekers who viewed employer's jobs
+export const getJobSeekersWhoViewedJobs = async (): Promise<any[]> => {
+  const res = await api.get<any[]>("/jobs/viewed/jobseekers");
   return res.data;
 };

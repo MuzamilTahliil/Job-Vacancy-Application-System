@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { Table, Button, Tag, Space, Input, Modal, Spin } from "antd";
 import { SearchOutlined, EyeOutlined, FileTextOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
-import { getAllJobSeekers, JobSeekerProfile } from "@/app/services/profiles.service";
+import { JobSeekerProfile } from "@/app/services/profiles.service";
+import { getJobSeekersWhoViewedJobs } from "@/app/services/jobs.service";
 
 export default function EmployerJobSeekersPage() {
   const [jobSeekers, setJobSeekers] = useState<JobSeekerProfile[]>([]);
@@ -20,7 +21,8 @@ export default function EmployerJobSeekersPage() {
   const fetchJobSeekers = async () => {
     try {
       setLoading(true);
-      const data = await getAllJobSeekers();
+      // Only get job seekers who viewed this employer's jobs
+      const data = await getJobSeekersWhoViewedJobs();
       setJobSeekers(data);
     } catch (error: any) {
       console.error("Error fetching job seekers:", error);
@@ -87,6 +89,29 @@ export default function EmployerJobSeekersPage() {
       },
     },
     {
+      title: "Viewed Jobs",
+      key: "viewedJobs",
+      width: 200,
+      render: (_, record: any) => {
+        const viewedJobs = record.viewedJobs || [];
+        if (viewedJobs.length === 0) {
+          return <span className="text-gray-400">No jobs viewed</span>;
+        }
+        return (
+          <div className="flex flex-col gap-1">
+            {viewedJobs.slice(0, 2).map((job: any, index: number) => (
+              <Tag key={index} color="green" className="mb-1">
+                {job.jobTitle}
+              </Tag>
+            ))}
+            {viewedJobs.length > 2 && (
+              <Tag color="default">+{viewedJobs.length - 2} more</Tag>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       title: "Actions",
       key: "actions",
       width: 150,
@@ -112,6 +137,7 @@ export default function EmployerJobSeekersPage() {
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Job Seekers</h1>
+      <p className="text-gray-600 mb-4">Job seekers who viewed your jobs</p>
       <div className="mb-4">
         <Input
           size="large"

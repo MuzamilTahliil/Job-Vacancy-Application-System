@@ -53,7 +53,16 @@ export default function JobViewersPage() {
       render: (_, record) => record.viewer?.phoneNumber || <span className="text-gray-400">null</span>,
     },
     {
-      title: "Viewed At",
+      title: "Views",
+      key: "viewCount",
+      width: 100,
+      render: (_, record) => (
+        <Tag color="blue">{record.viewCount || 1}</Tag>
+      ),
+      sorter: (a, b) => (a.viewCount || 1) - (b.viewCount || 1),
+    },
+    {
+      title: "Last Viewed",
       dataIndex: "viewedAt",
       key: "viewedAt",
       width: 180,

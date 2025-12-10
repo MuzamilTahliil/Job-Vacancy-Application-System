@@ -48,11 +48,14 @@ export default function JobDetailPage() {
 
   const trackView = async (jobId: number) => {
     try {
+      console.log(`[JobDetail] Tracking view for jobId: ${jobId}`);
       // Track view using API service
-      await trackJobView(jobId);
-    } catch (error) {
-      // Silently fail - view tracking is not critical
+      const result = await trackJobView(jobId);
+      console.log(`[JobDetail] View tracked successfully:`, result);
+    } catch (error: any) {
+      // Log error but don't show to user - view tracking is not critical
       console.error("Error tracking view:", error);
+      console.error("Error details:", error?.response?.data || error?.message);
     }
   };
 

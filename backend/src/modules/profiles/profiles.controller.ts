@@ -43,7 +43,7 @@ export class ProfilesController {
   }
 
   @Get('all')
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.EMPLOYER)
   findAll() {
     return this.profilesService.findAll();
   }

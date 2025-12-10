@@ -273,24 +273,41 @@ export class JobsService {
   }
 
   async trackView(jobId: number, viewerId: number | null) {
+    console.log(`[JobsService] Tracking view for jobId: ${jobId}, viewerId: ${viewerId}`);
+    
     // Check if job exists
     const job = await this.prisma.job.findUnique({
       where: { id: jobId },
     });
 
     if (!job) {
+      console.log(`[JobsService] Job not found: ${jobId}`);
       throw new NotFoundException('Job not found');
     }
 
-    // Record the view
-    await this.prisma.jobView.create({
-      data: {
+    try {
+      // Record the view - viewerId can be null for anonymous views
+      const view = await this.prisma.jobView.create({
+        data: {
+          jobId,
+          viewerId: viewerId || null, // Explicitly set to null if undefined
+        },
+      });
+      console.log(`[JobsService] View recorded successfully: ${view.id} for jobId: ${jobId}, viewerId: ${viewerId || 'anonymous'}`);
+      return { success: true, viewId: view.id };
+    } catch (error: any) {
+      console.error(`[JobsService] Error creating view:`, error);
+      console.error(`[JobsService] Error details:`, {
+        message: error.message,
+        code: error.code,
+        meta: error.meta,
         jobId,
         viewerId,
-      },
-    });
-
-    return { success: true };
+      });
+      
+      // Re-throw with more context
+      throw error;
+    }
   }
 
   async getJobViews(jobId: number) {
@@ -312,11 +329,12 @@ export class JobsService {
       return [];
     }
 
-    // Get view counts for each job
+    // Get view counts for each job - only count logged-in job seekers (viewerId is not null)
     const views = await this.prisma.jobView.groupBy({
       by: ['jobId'],
       where: {
         jobId: { in: jobIds },
+        viewerId: { not: null }, // Only count logged-in job seekers who clicked/visited
       },
       _count: {
         id: true,
@@ -342,11 +360,11 @@ export class JobsService {
       return [];
     }
 
-    // Get all views with viewer information for employer's jobs
-    const views = await this.prisma.jobView.findMany({
+    // Get all views with viewer information for employer's jobs (only logged-in viewers)
+    const allViews = await this.prisma.jobView.findMany({
       where: {
         jobId: { in: jobIds },
-        viewerId: { not: null }, // Only logged-in viewers
+        viewerId: { not: null }, // Only logged-in viewers (job seekers)
       },
       include: {
         viewer: {
@@ -369,18 +387,189 @@ export class JobsService {
       },
     });
 
-    return views.map(v => ({
+    // Group by jobId and viewerId to get unique combinations (no duplicates)
+    // Use a Map to track unique job seeker + job combinations
+    const uniqueViewers = new Map<string, {
+      id: number;
+      jobId: number;
+      jobTitle: string;
+      viewerId: number;
+      viewer: {
+        id: number;
+        fullName: string;
+        email: string;
+        phoneNumber: string | null;
+      };
+      viewedAt: Date;
+      viewCount: number; // How many times this job seeker viewed this job
+    }>();
+
+    allViews.forEach(v => {
+      if (!v.viewer) return; // Skip if no viewer (shouldn't happen due to filter, but safety check)
+      
+      // Create a unique key: jobId_viewerId
+      const uniqueKey = `${v.jobId}_${v.viewerId}`;
+      
+      if (!uniqueViewers.has(uniqueKey)) {
+        // First time seeing this combination - add it
+        uniqueViewers.set(uniqueKey, {
+          id: v.id, // Use the most recent view ID
+          jobId: v.jobId,
+          jobTitle: v.job.title,
+          viewerId: v.viewerId!,
+          viewer: {
+            id: v.viewer.id,
+            fullName: v.viewer.fullName,
+            email: v.viewer.email,
+            phoneNumber: v.viewer.phoneNumber,
+          },
+          viewedAt: v.viewedAt,
+          viewCount: 1,
+        });
+      } else {
+        // Already exists - update to most recent view time and increment count
+        const existing = uniqueViewers.get(uniqueKey)!;
+        if (v.viewedAt > existing.viewedAt) {
+          existing.viewedAt = v.viewedAt;
+          existing.id = v.id; // Update to most recent view ID
+        }
+        existing.viewCount += 1;
+      }
+    });
+
+    // Convert Map to array and return
+    return Array.from(uniqueViewers.values()).map(v => ({
       id: v.id,
       jobId: v.jobId,
-      jobTitle: v.job.title,
+      jobTitle: v.jobTitle,
       viewerId: v.viewerId,
-      viewer: v.viewer ? {
-        id: v.viewer.id,
-        fullName: v.viewer.fullName,
-        email: v.viewer.email,
-        phoneNumber: v.viewer.phoneNumber,
-      } : null,
+      viewer: v.viewer,
       viewedAt: v.viewedAt,
+      viewCount: v.viewCount, // Include view count
+    }));
+  }
+
+  async getJobSeekersWhoViewedJobs(employerId: number) {
+    console.log(`[JobsService] Getting job seekers who viewed jobs for employer: ${employerId}`);
+    
+    // Get all jobs for this employer
+    const jobs = await this.prisma.job.findMany({
+      where: { employerId },
+      select: { id: true },
+    });
+    
+    console.log(`[JobsService] Found ${jobs.length} jobs for employer ${employerId}`);
+
+    const jobIds = jobs.map(j => j.id);
+
+    if (jobIds.length === 0) {
+      return [];
+    }
+
+    // Get unique job seekers who viewed employer's jobs (only logged-in viewers)
+    const views = await this.prisma.jobView.findMany({
+      where: {
+        jobId: { in: jobIds },
+        viewerId: { not: null }, // Only logged-in viewers (job seekers)
+      },
+      include: {
+        viewer: {
+          include: {
+            jobSeekerProfile: true,
+          },
+        },
+        job: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+      },
+      orderBy: {
+        viewedAt: 'desc',
+      },
+    });
+
+    // Get unique job seekers (no duplicates by viewerId) and track which jobs they viewed
+    const uniqueJobSeekers = new Map<number, {
+      userId: number;
+      user: {
+        id: number;
+        fullName: string;
+        email: string;
+        phoneNumber: string | null;
+      };
+      profile: {
+        id: number;
+        bio: string | null;
+        skills: string[];
+        experience: string | null;
+        education: string | null;
+        resumeUrl: string | null;
+        linkedinUrl: string | null;
+        portfolioUrl: string | null;
+      } | null;
+      viewedJobs: Array<{ jobId: number; jobTitle: string; viewedAt: Date }>;
+    }>();
+
+    views.forEach(v => {
+      if (!v.viewer || !v.viewer.jobSeekerProfile) return; // Skip if no viewer or profile
+      
+      const viewerId = v.viewer.id;
+      if (!uniqueJobSeekers.has(viewerId)) {
+        uniqueJobSeekers.set(viewerId, {
+          userId: viewerId,
+          user: {
+            id: v.viewer.id,
+            fullName: v.viewer.fullName,
+            email: v.viewer.email,
+            phoneNumber: v.viewer.phoneNumber,
+          },
+          profile: v.viewer.jobSeekerProfile ? {
+            id: v.viewer.jobSeekerProfile.id,
+            bio: v.viewer.jobSeekerProfile.bio,
+            skills: v.viewer.jobSeekerProfile.skills,
+            experience: v.viewer.jobSeekerProfile.experience,
+            education: v.viewer.jobSeekerProfile.education,
+            resumeUrl: v.viewer.jobSeekerProfile.resumeUrl,
+            linkedinUrl: v.viewer.jobSeekerProfile.linkedinUrl,
+            portfolioUrl: v.viewer.jobSeekerProfile.portfolioUrl,
+          } : null,
+          viewedJobs: [],
+        });
+      }
+      
+      // Add job to viewed jobs list
+      const seeker = uniqueJobSeekers.get(viewerId)!;
+      const jobInfo = {
+        jobId: v.jobId,
+        jobTitle: v.job.title,
+        viewedAt: v.viewedAt,
+      };
+      
+      // Only add if not already in the list (avoid duplicates)
+      if (!seeker.viewedJobs.some(j => j.jobId === v.jobId)) {
+        seeker.viewedJobs.push(jobInfo);
+      }
+    });
+
+    // Convert Map to array and return in format matching JobSeekerProfile
+    return Array.from(uniqueJobSeekers.values()).map(seeker => ({
+      id: seeker.profile?.id || 0,
+      userId: seeker.userId,
+      bio: seeker.profile?.bio || null,
+      skills: seeker.profile?.skills || [],
+      experience: seeker.profile?.experience || null,
+      education: seeker.profile?.education || null,
+      resumeUrl: seeker.profile?.resumeUrl || null,
+      linkedinUrl: seeker.profile?.linkedinUrl || null,
+      portfolioUrl: seeker.profile?.portfolioUrl || null,
+      user: seeker.user,
+      viewedJobs: seeker.viewedJobs.map(job => ({
+        jobId: job.jobId,
+        jobTitle: job.jobTitle,
+        viewedAt: job.viewedAt.toISOString(), // Convert Date to string
+      })), // Jobs this seeker viewed
     }));
   }
 }
