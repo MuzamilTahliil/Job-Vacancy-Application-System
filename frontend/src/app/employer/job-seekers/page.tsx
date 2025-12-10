@@ -1,73 +1,108 @@
 "use client";
 
-import { useState } from "react";
-import { Table, Button, Tag, Space, Input, Modal } from "antd";
+import { useState, useEffect } from "react";
+import { Table, Button, Tag, Space, Input, Modal, Spin } from "antd";
 import { SearchOutlined, EyeOutlined, FileTextOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
-
-interface JobSeekerProfile {
-  id: string;
-  userName: string;
-  userEmail: string;
-  bio?: string;
-  skills: string[];
-  experience?: string;
-  education?: string;
-  resumeUrl?: string;
-  linkedinUrl?: string;
-  portfolioUrl?: string;
-}
-
-const mockJobSeekers: JobSeekerProfile[] = [
-  {
-    id: "1",
-    userName: "John Doe",
-    userEmail: "john@example.com",
-    bio: "Experienced frontend developer...",
-    skills: ["React", "Node.js", "TypeScript"],
-    experience: "3 years of experience",
-    education: "Bachelor's in Computer Science",
-    resumeUrl: "/resumes/john-doe.pdf",
-    linkedinUrl: "https://linkedin.com/in/johndoe",
-    portfolioUrl: "https://johndoe.dev",
-  },
-];
+import { getAllJobSeekers, JobSeekerProfile } from "@/app/services/profiles.service";
 
 export default function EmployerJobSeekersPage() {
-  const [jobSeekers, setJobSeekers] = useState(mockJobSeekers);
+  const [jobSeekers, setJobSeekers] = useState<JobSeekerProfile[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSeeker, setSelectedSeeker] = useState<JobSeekerProfile | null>(null);
+
+  useEffect(() => {
+    fetchJobSeekers();
+  }, []);
+
+  const fetchJobSeekers = async () => {
+    try {
+      setLoading(true);
+      const data = await getAllJobSeekers();
+      setJobSeekers(data);
+    } catch (error: any) {
+      console.error("Error fetching job seekers:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleViewProfile = (seeker: JobSeekerProfile) => {
     setSelectedSeeker(seeker);
     setIsModalOpen(true);
   };
 
+  const filteredJobSeekers = jobSeekers.filter((seeker) => {
+    const name = seeker.user?.fullName?.toLowerCase() || "";
+    const email = seeker.user?.email?.toLowerCase() || "";
+    const searchLower = searchText.toLowerCase();
+    return name.includes(searchLower) || email.includes(searchLower);
+  });
+
   const columns: ColumnsType<JobSeekerProfile> = [
-    { title: "Name", dataIndex: "userName", key: "userName", width: 150 },
-    { title: "Email", dataIndex: "userEmail", key: "userEmail", width: 200 },
+    { 
+      title: "Name", 
+      dataIndex: ["user", "fullName"], 
+      key: "userName", 
+      width: 150,
+      render: (_, record) => record.user?.fullName || <span className="text-gray-400">null</span>,
+    },
+    { 
+      title: "Email", 
+      dataIndex: ["user", "email"], 
+      key: "userEmail", 
+      width: 200,
+      render: (_, record) => record.user?.email || <span className="text-gray-400">null</span>,
+    },
     {
       title: "Skills",
       dataIndex: "skills",
       key: "skills",
+      width: 250,
+      render: (skills: string[]) => {
+        if (!skills || skills.length === 0) {
+          return <span className="text-gray-400">null</span>;
+        }
+        return (
+          <div className="flex flex-wrap gap-1">
+            {skills.slice(0, 3).map((skill, index) => (
+              <Tag key={index} color="blue">{skill}</Tag>
+            ))}
+            {skills.length > 3 && <Tag color="default">+{skills.length - 3} more</Tag>}
+          </div>
+        );
+      },
+    },
+    {
+      title: "Bio",
+      dataIndex: "bio",
+      key: "bio",
       width: 200,
-      render: (skills: string[]) => (
-        <div className="flex flex-wrap gap-1">
-          {skills.map((skill, index) => (
-            <Tag key={index} color="blue">{skill}</Tag>
-          ))}
-        </div>
-      ),
+      ellipsis: true,
+      render: (bio: string) => {
+        if (!bio) return <span className="text-gray-400">null</span>;
+        return <span title={bio}>{bio.length > 50 ? `${bio.substring(0, 50)}...` : bio}</span>;
+      },
     },
     {
       title: "Actions",
       key: "actions",
+      width: 150,
       render: (_, record) => (
         <Space size="middle">
-          <Button type="link" icon={<EyeOutlined />} onClick={() => handleViewProfile(record)}>View Profile</Button>
+          <Button type="link" icon={<EyeOutlined />} onClick={() => handleViewProfile(record)}>
+            View Profile
+          </Button>
           {record.resumeUrl && (
-            <Button type="link" icon={<FileTextOutlined />} onClick={() => window.open(record.resumeUrl, "_blank")}>Resume</Button>
+            <Button 
+              type="link" 
+              icon={<FileTextOutlined />} 
+              onClick={() => window.open(record.resumeUrl || "", "_blank")}
+            >
+              Resume
+            </Button>
           )}
         </Space>
       ),
@@ -80,7 +115,7 @@ export default function EmployerJobSeekersPage() {
       <div className="mb-4">
         <Input
           size="large"
-          placeholder="Search job seekers..."
+          placeholder="Search job seekers by name or email..."
           prefix={<SearchOutlined />}
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
@@ -88,16 +123,20 @@ export default function EmployerJobSeekersPage() {
         />
       </div>
 
-      <Table
-        columns={columns}
-        dataSource={jobSeekers.filter((seeker) =>
-          seeker.userName.toLowerCase().includes(searchText.toLowerCase()) ||
-          seeker.userEmail.toLowerCase().includes(searchText.toLowerCase())
-        )}
-        rowKey="id"
-        pagination={{ pageSize: 10 }}
-        className="bg-white rounded-lg shadow-sm"
-      />
+      {loading ? (
+        <div className="flex justify-center items-center py-20">
+          <Spin size="large" />
+        </div>
+      ) : (
+        <Table
+          columns={columns}
+          dataSource={filteredJobSeekers}
+          rowKey="id"
+          pagination={{ pageSize: 10 }}
+          className="bg-white rounded-lg shadow-sm"
+          scroll={{ x: 1000 }}
+        />
+      )}
 
       <Modal
         open={isModalOpen}
@@ -111,17 +150,79 @@ export default function EmployerJobSeekersPage() {
         </div>
         {selectedSeeker && (
           <div className="max-h-[70vh] overflow-y-auto pr-2 space-y-4">
-            <div><label className="font-semibold">Name:</label> <p className="text-xl font-bold">{selectedSeeker.userName}</p></div>
-            <div><label className="font-semibold">Email:</label> <p>{selectedSeeker.userEmail}</p></div>
-            {selectedSeeker.bio && <div><label className="font-semibold">Bio:</label> <p className="bg-gray-50 p-4 rounded-lg">{selectedSeeker.bio}</p></div>}
-            <div><label className="font-semibold">Skills:</label> <div className="flex flex-wrap gap-2 mt-2">{selectedSeeker.skills.map((skill, i) => <Tag key={i} color="blue">{skill}</Tag>)}</div></div>
-            {selectedSeeker.experience && <div><label className="font-semibold">Experience:</label> <p className="bg-gray-50 p-4 rounded-lg">{selectedSeeker.experience}</p></div>}
-            {selectedSeeker.education && <div><label className="font-semibold">Education:</label> <p className="bg-gray-50 p-4 rounded-lg">{selectedSeeker.education}</p></div>}
-            {selectedSeeker.resumeUrl && <div><Button type="primary" icon={<FileTextOutlined />} onClick={() => window.open(selectedSeeker.resumeUrl, "_blank")} className="bg-primary-green hover:bg-primary-green-dark border-primary-green">View Resume</Button></div>}
+            <div>
+              <label className="font-semibold">Name:</label> 
+              <p className="text-xl font-bold">{selectedSeeker.user?.fullName || <span className="text-gray-400">null</span>}</p>
+            </div>
+            <div>
+              <label className="font-semibold">Email:</label> 
+              <p>{selectedSeeker.user?.email || <span className="text-gray-400">null</span>}</p>
+            </div>
+            {selectedSeeker.bio && (
+              <div>
+                <label className="font-semibold">Bio:</label> 
+                <p className="bg-gray-50 p-4 rounded-lg">{selectedSeeker.bio}</p>
+              </div>
+            )}
+            <div>
+              <label className="font-semibold">Skills:</label> 
+              <div className="flex flex-wrap gap-2 mt-2">
+                {selectedSeeker.skills && selectedSeeker.skills.length > 0 ? (
+                  selectedSeeker.skills.map((skill, i) => (
+                    <Tag key={i} color="blue">{skill}</Tag>
+                  ))
+                ) : (
+                  <span className="text-gray-400">null</span>
+                )}
+              </div>
+            </div>
+            {selectedSeeker.experience && (
+              <div>
+                <label className="font-semibold">Experience:</label> 
+                <p className="bg-gray-50 p-4 rounded-lg">{selectedSeeker.experience}</p>
+              </div>
+            )}
+            {selectedSeeker.education && (
+              <div>
+                <label className="font-semibold">Education:</label> 
+                <p className="bg-gray-50 p-4 rounded-lg">{selectedSeeker.education}</p>
+              </div>
+            )}
+            {selectedSeeker.resumeUrl && (
+              <div>
+                <Button 
+                  type="primary" 
+                  icon={<FileTextOutlined />} 
+                  onClick={() => window.open(selectedSeeker.resumeUrl || "", "_blank")} 
+                  className="bg-primary-green hover:bg-primary-green-dark border-primary-green"
+                >
+                  View Resume
+                </Button>
+              </div>
+            )}
+            {selectedSeeker.linkedinUrl && (
+              <div>
+                <label className="font-semibold">LinkedIn:</label> 
+                <p>
+                  <a href={selectedSeeker.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-primary-green hover:underline">
+                    {selectedSeeker.linkedinUrl}
+                  </a>
+                </p>
+              </div>
+            )}
+            {selectedSeeker.portfolioUrl && (
+              <div>
+                <label className="font-semibold">Portfolio:</label> 
+                <p>
+                  <a href={selectedSeeker.portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-primary-green hover:underline">
+                    {selectedSeeker.portfolioUrl}
+                  </a>
+                </p>
+              </div>
+            )}
           </div>
         )}
       </Modal>
     </div>
   );
 }
-

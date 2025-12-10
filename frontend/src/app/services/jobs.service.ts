@@ -27,6 +27,9 @@ export interface Job {
     email: string;
     role?: string;
     companyName?: string;
+    companyLocation?: string;
+    companyDescription?: string;
+    companyWebsite?: string;
   };
 }
 
@@ -77,4 +80,35 @@ export const updateJob = async (id: number, job: UpdateJobDto): Promise<Job> => 
 // Delete a job (requires authentication)
 export const deleteJob = async (id: number): Promise<void> => {
   await api.delete(`/jobs/${id}`);
+};
+
+// Track a job view
+export const trackJobView = async (jobId: number): Promise<void> => {
+  await api.post(`/jobs/${jobId}/view`);
+};
+
+// Get job views for employer
+export const getJobViewsForEmployer = async (): Promise<{ jobId: number; viewCount: number }[]> => {
+  const res = await api.get<{ jobId: number; viewCount: number }[]>("/jobs/views/employer");
+  return res.data;
+};
+
+// Get job viewers (job seekers who viewed jobs) for employer
+export interface JobViewer {
+  id: number;
+  jobId: number;
+  jobTitle: string;
+  viewerId: number | null;
+  viewer: {
+    id: number;
+    fullName: string;
+    email: string;
+    phoneNumber: string | null;
+  } | null;
+  viewedAt: string;
+}
+
+export const getJobViewersForEmployer = async (): Promise<JobViewer[]> => {
+  const res = await api.get<JobViewer[]>("/jobs/viewers/employer");
+  return res.data;
 };

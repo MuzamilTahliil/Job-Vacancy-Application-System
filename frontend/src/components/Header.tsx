@@ -90,23 +90,7 @@ export default function Header() {
 
         {/* Action Buttons */}
         <div className="hidden md:flex items-center gap-3">
-          {isAuthenticated ? (
-            <>
-              <Button
-                onClick={handleDashboard}
-                className="h-10 px-6 text-primary-green border-primary-green font-medium rounded-lg hover:text-primary-green-dark hover:border-primary-green-dark hover:bg-primary-green-light transition-all duration-300 hover:-translate-y-0.5"
-              >
-                Dashboard
-              </Button>
-              <Button
-                type="primary"
-                onClick={handleLogout}
-                className="h-10 px-6 font-semibold rounded-lg bg-gradient-to-r from-primary-green to-primary-green-dark border-none shadow-lg hover:shadow-xl hover:from-primary-green-dark hover:to-[#047857] transition-all duration-300 hover:-translate-y-1"
-              >
-                Logout
-              </Button>
-            </>
-          ) : (
+          {pathname === "/" || !isAuthenticated ? (
             <>
               <Button
                 onClick={handleSignIn}
@@ -120,6 +104,22 @@ export default function Header() {
                 className="h-10 px-6 font-semibold rounded-lg bg-gradient-to-r from-primary-green to-primary-green-dark border-none shadow-lg hover:shadow-xl hover:from-primary-green-dark hover:to-[#047857] transition-all duration-300 hover:-translate-y-1"
               >
                 Get Started
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                onClick={handleDashboard}
+                className="h-10 px-6 text-primary-green border-primary-green font-medium rounded-lg hover:text-primary-green-dark hover:border-primary-green-dark hover:bg-primary-green-light transition-all duration-300 hover:-translate-y-0.5"
+              >
+                Dashboard
+              </Button>
+              <Button
+                type="primary"
+                onClick={handleLogout}
+                className="h-10 px-6 font-semibold rounded-lg bg-gradient-to-r from-primary-green to-primary-green-dark border-none shadow-lg hover:shadow-xl hover:from-primary-green-dark hover:to-[#047857] transition-all duration-300 hover:-translate-y-1"
+              >
+                Logout
               </Button>
             </>
           )}
@@ -156,31 +156,7 @@ export default function Header() {
             ))}
           </div>
           <div className="px-4 pb-4 flex flex-col gap-3">
-            {isAuthenticated ? (
-              <>
-                <Button
-                  block
-                  onClick={() => {
-                    handleDashboard();
-                    setIsMenuOpen(false);
-                  }}
-                  className="h-12 text-primary-green border-primary-green font-medium rounded-lg"
-                >
-                  Dashboard
-                </Button>
-                <Button
-                  type="primary"
-                  block
-                  onClick={() => {
-                    handleLogout();
-                    setIsMenuOpen(false);
-                  }}
-                  className="h-12 font-semibold rounded-lg bg-gradient-to-r from-primary-green to-primary-green-dark border-none"
-                >
-                  Logout
-                </Button>
-              </>
-            ) : (
+            {pathname === "/" || !isAuthenticated ? (
               <>
                 <Button
                   block
@@ -202,6 +178,30 @@ export default function Header() {
                   className="h-12 font-semibold rounded-lg bg-gradient-to-r from-primary-green to-primary-green-dark border-none"
                 >
                   Get Started
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  block
+                  onClick={() => {
+                    handleDashboard();
+                    setIsMenuOpen(false);
+                  }}
+                  className="h-12 text-primary-green border-primary-green font-medium rounded-lg"
+                >
+                  Dashboard
+                </Button>
+                <Button
+                  type="primary"
+                  block
+                  onClick={() => {
+                    handleLogout();
+                    setIsMenuOpen(false);
+                  }}
+                  className="h-12 font-semibold rounded-lg bg-gradient-to-r from-primary-green to-primary-green-dark border-none"
+                >
+                  Logout
                 </Button>
               </>
             )}

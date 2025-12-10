@@ -12,7 +12,7 @@ function getDashboardRoute(role: UserRole): string {
   } else if (role === UserRole.EMPLOYER) {
     return "/employer/dashboard";
   } else if (role === UserRole.JOB_SEEKER) {
-    return "/seeker/dashboard";
+    return "/"; // Job seekers go to home page
   }
   return "/";
 }

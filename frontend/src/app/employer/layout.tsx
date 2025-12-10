@@ -17,8 +17,8 @@ export default function EmployerLayout({ children }: { children: React.ReactNode
     <AuthGuard allowedRoles={[UserRole.EMPLOYER]}>
       <div className="min-h-screen bg-gray-50">
         <EmployerSidebar />
-        <div className="ml-64">
-          <EmployerHeader />
+        <EmployerHeader />
+        <div className="ml-64 pt-16">
           <main className="p-6">
             {children}
           </main>

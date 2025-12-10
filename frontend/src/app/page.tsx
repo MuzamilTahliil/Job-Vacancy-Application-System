@@ -1,21 +1,39 @@
 "use client";
 
-import { useState } from "react";
-import { Row, Col, Input, Button, Card } from "antd";
-import { SearchOutlined, RocketOutlined, TeamOutlined, TrophyOutlined, ArrowRightOutlined } from "@ant-design/icons";
+import { useState, useEffect } from "react";
+import { Row, Col, Button, Card, Spin } from "antd";
+import { RocketOutlined, TeamOutlined, TrophyOutlined, ArrowRightOutlined, SearchOutlined } from "@ant-design/icons";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { getJobs, Job } from "@/app/services/jobs.service";
 import JobCard from "@/components/JobCard";
 
-// Featured jobs data
-const featuredJobs = [
-  { id: "1", title: "Frontend Developer", company: "ABC Corp", location: "Mogadishu", status: "Open" },
-  { id: "2", title: "Backend Developer", company: "XYZ Ltd", location: "Hargeisa", status: "Open" },
-  { id: "3", title: "UI/UX Designer", company: "Tech Solutions", location: "Hargeisa", status: "Open" },
-  { id: "4", title: "Full Stack Developer", company: "Digital Innovations", location: "Mogadishu", status: "Open" },
-];
-
 export default function HomePage() {
-  const [searchText, setSearchText] = useState("");
+  const router = useRouter();
+  const [featuredJobs, setFeaturedJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchFeaturedJobs();
+  }, []);
+
+  const fetchFeaturedJobs = async () => {
+    try {
+      setLoading(true);
+      const allJobs = await getJobs();
+      // Get only active jobs and limit to 4 most recent
+      const activeJobs = allJobs.filter(job => job.isActive);
+      const sorted = activeJobs.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setFeaturedJobs(sorted.slice(0, 4));
+    } catch (error: any) {
+      console.error("Error fetching featured jobs:", error);
+      // Continue with empty array if fetch fails
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen mt-12">
@@ -107,19 +125,40 @@ export default function HomePage() {
               </Button>
             </Link>
           </div>
-          <Row gutter={[24, 24]}>
-            {featuredJobs.map((job) => (
-              <Col xs={24} sm={12} lg={6} key={job.id}>
-                <JobCard
-                  id={job.id}
-                  title={job.title}
-                  company={job.company}
-                  location={job.location}
-                  onApply={() => {}}
-                />
-              </Col>
-            ))}
-          </Row>
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <Spin size="large" />
+            </div>
+          ) : featuredJobs.length > 0 ? (
+            <Row gutter={[24, 24]}>
+              {featuredJobs.map((job) => (
+                <Col xs={24} sm={12} lg={6} key={job.id}>
+                  <Card
+                    className="h-full hover:shadow-lg transition-all duration-300 cursor-pointer"
+                    onClick={() => router.push(`/jobs/${job.id}`)}
+                  >
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">{job.title}</h3>
+                    <p className="text-primary-green font-medium mb-1">{job.employer?.companyName || "Company"}</p>
+                    <p className="text-gray-600 text-sm">{job.location}</p>
+                    <Button
+                      type="primary"
+                      className="mt-4 w-full bg-primary-green hover:bg-primary-green-dark border-primary-green"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/jobs/${job.id}`);
+                      }}
+                    >
+                      View Details
+                    </Button>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              <p>No featured jobs available at the moment.</p>
+            </div>
+          )}
         </div>
       </section>
 

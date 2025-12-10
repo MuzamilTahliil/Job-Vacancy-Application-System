@@ -19,6 +19,7 @@ model User {
   applications     Application[]
   jobSeekerProfile JobSeekerProfile?
   jobs             Job[]
+  jobViews         JobView[]
   company          Company?          @relation(fields: [companyId], references: [id])
 
   @@map("users")
@@ -52,6 +53,7 @@ model Job {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
   applications     Application[]
+  jobViews         JobView[]
   employer         User          @relation(fields: [employerId], references: [id], onDelete: Cascade)
 
   @@map("jobs")
@@ -91,6 +93,17 @@ model JobSeekerProfile {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("job_seeker_profiles")
+}
+
+model JobView {
+  id        Int      @id @default(autoincrement())
+  jobId     Int
+  viewerId  Int?
+  viewedAt  DateTime @default(now())
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  viewer    User?    @relation(fields: [viewerId], references: [id], onDelete: SetNull)
+
+  @@map("job_views")
 }
 
 enum UserRole {

@@ -8,7 +8,7 @@ export default function EmployerHeader() {
   const router = useRouter();
 
   return (
-    <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-40">
+    <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex items-center justify-between fixed top-0 right-0 left-64 z-40">
       {/* Search Bar */}
       <div className="flex-1 max-w-md">
         <Input

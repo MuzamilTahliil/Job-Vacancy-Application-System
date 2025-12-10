@@ -8,6 +8,7 @@ import {
   FileTextOutlined,
   ProfileOutlined,
   LogoutOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
 import { logout } from "@/app/services/auth.service";
 
@@ -40,6 +41,11 @@ export default function EmployerSidebar() {
       key: "/employer/applications",
       icon: <FileTextOutlined />,
       label: "Applications",
+    },
+    {
+      key: "/employer/job-viewers",
+      icon: <EyeOutlined />,
+      label: "Job Viewers",
     },
     {
       key: "/employer/profile",

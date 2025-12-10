@@ -9,6 +9,7 @@ import {
   Req,
   ParseIntPipe,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { JobsService } from './jobs.service';
 import { CreateJobDto } from './dto/create-job.dto';
@@ -24,6 +25,7 @@ import {
 } from './decorators/swagger.decorators';
 import type { AuthenticatedRequest } from '../../common/interfaces/authenticated-request.interface';
 import { Public } from '../../common/decorator/public.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @ApiTags('Jobs')
 @Controller('jobs')
@@ -35,6 +37,20 @@ export class JobsController {
   @ApiFindAllJobs()
   findAll(@Query() query: SearchJobDto) {
     return this.jobsService.findAll(query);
+  }
+
+  @Get('views/employer')
+  @UseGuards(JwtAuthGuard)
+  getEmployerViews(@Req() req: AuthenticatedRequest) {
+    const employerId = req.user.id;
+    return this.jobsService.getJobViewsForEmployer(employerId);
+  }
+
+  @Get('viewers/employer')
+  @UseGuards(JwtAuthGuard)
+  getEmployerViewers(@Req() req: AuthenticatedRequest) {
+    const employerId = req.user.id;
+    return this.jobsService.getJobViewersForEmployer(employerId);
   }
 
   @Get(':id')
@@ -71,5 +87,15 @@ export class JobsController {
   ) {
     const userId = req.user.id;
     return this.jobsService.remove(userId, id);
+  }
+
+  @Post(':id/view')
+  @Public()
+  trackView(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    const viewerId = req.user?.id || null;
+    return this.jobsService.trackView(id, viewerId);
   }
 }
