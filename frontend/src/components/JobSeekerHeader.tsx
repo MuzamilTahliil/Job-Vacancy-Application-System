@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Input, Avatar, Badge, Button } from "antd";
-import { SearchOutlined, BellOutlined, UserOutlined } from "@ant-design/icons";
+import { Input, Avatar, Badge, Dropdown, MenuProps } from "antd";
+import { SearchOutlined, BellOutlined, UserOutlined, LogoutOutlined, ProfileOutlined } from "@ant-design/icons";
 import { logout } from "@/app/services/auth.service";
 import { getCurrentUser, User } from "@/app/services/users.service";
 
@@ -29,6 +29,29 @@ export default function JobSeekerHeader() {
     logout();
     router.push("/");
   };
+
+  const handleProfile = () => {
+    router.push("/seeker/profile");
+  };
+
+  const userMenuItems: MenuProps['items'] = [
+    {
+      key: 'profile',
+      label: 'Profile',
+      icon: <ProfileOutlined />,
+      onClick: handleProfile,
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'logout',
+      label: 'Logout',
+      icon: <LogoutOutlined />,
+      danger: true,
+      onClick: handleLogout,
+    },
+  ];
 
   const menuItems = [
     { key: "/", label: "Home" },
@@ -86,20 +109,19 @@ export default function JobSeekerHeader() {
               onClick={() => router.push("/notifications")}
             />
           </Badge>
-          <Avatar
-            size={40}
-            icon={<UserOutlined />}
-            className="cursor-pointer border-2 border-primary-green hover:border-primary-green-dark transition-colors"
-            onClick={() => router.push("/seeker/profile")}
+          <Dropdown 
+            menu={{ items: userMenuItems }} 
+            placement="bottomRight"
+            trigger={['click']}
           >
-            {currentUser?.fullName?.charAt(0).toUpperCase()}
-          </Avatar>
-          <Button
-            onClick={handleLogout}
-            className="text-gray-600 hover:text-red-500"
-          >
-            Logout
-          </Button>
+            <Avatar
+              size={40}
+              icon={<UserOutlined />}
+              className="cursor-pointer border-2 border-primary-green hover:border-primary-green-dark transition-colors"
+            >
+              {currentUser?.fullName?.charAt(0).toUpperCase()}
+            </Avatar>
+          </Dropdown>
         </div>
 
         {/* Mobile Menu Button */}
